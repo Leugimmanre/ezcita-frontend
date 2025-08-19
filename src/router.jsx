@@ -4,27 +4,27 @@ import AuthLayout from "@/layouts/AuthLayout.jsx";
 import AppLayout from "@/layouts/AppLayout.jsx";
 import LoginView from "@/views/authViews/LoginView.jsx";
 import RegistrationView from "@/views/authViews/RegistrationView";
-import ResetPasswordView from "./views/authViews/ResetPasswordView";
-import VerifyView from "./views/authViews/VerifyView";
-import AppointmentsLayout from "./layouts/AppointmentsLayout";
+import ResetPasswordView from "@/views/authViews/ResetPasswordView";
+import VerifyView from "@/views/authViews/VerifyView";
+import AppointmentsLayout from "@/layouts/AppointmentsLayout";
 import NewAppointmentLayout from "@/layouts/NewAppointmentLayout";
 import AppointmentView from "@/views/servicesViews/AppointmentView";
 import GenerateTimeSlotsView from "@/views/settingsViews/GenerateTimeSlotsView";
 
-import ServicesView from "./views/servicesViews/ServicesView";
-import SettingsHomeView from "./views/settingsViews/SettingsHomeView";
-import SettingsLayout from "./layouts/SettingsLayout";
-import MyAppointmentsView from "./views/appointments/MyAppointmentsView";
-import ForgotPasswordView from "./views/authViews/ForgotPasswordView";
-import UsersView from "./views/usersView/UsersView";
-import EditAppointmentView from "./views/appointments/EditAppointmentView";
-import SettingsStaffView from "./views/settingsViews/SettingsStaffView";
-import SettingsAppointmentsView from "./views/settingsViews/SettingsAppointmentsView";
-import AdminRoute from "./components/authComponents/AdminRoute";
-import ProtectedRoute from "./components/authComponents/ProtectedRoute";
-import GuestRoute from "./components/authComponents/GuestRoute";
-import SupportView from "./views/authViews/SupportView";
-import SettingsServicesView from "./views/settingsViews/SettingsServicesView";
+import ServicesView from "@/views/servicesViews/ServicesView";
+import SettingsHomeView from "@/views/settingsViews/SettingsHomeView";
+import SettingsLayout from "@/layouts/SettingsLayout";
+import MyAppointmentsView from "@/views/appointments/MyAppointmentsView";
+import ForgotPasswordView from "@/views/authViews/ForgotPasswordView";
+import UsersView from "@/views/usersView/UsersView";
+import EditAppointmentView from "@/views/appointments/EditAppointmentView";
+import SettingsStaffView from "@/views/settingsViews/SettingsStaffView";
+import SettingsAppointmentsView from "@/views/settingsViews/SettingsAppointmentsView";
+import AdminRoute from "@/components/authComponents/AdminRoute";
+import ProtectedRoute from "@/components/authComponents/ProtectedRoute";
+import GuestRoute from "@/components/authComponents/GuestRoute";
+import SupportView from "@/views/authViews/SupportView";
+import SettingsServicesView from "@/views/settingsViews/SettingsServicesView";
 
 export const router = createBrowserRouter([
   // Auth (solo para invitados)

@@ -1,4 +1,4 @@
-// src/views/settingsViews/SettingsServicesView.jsx
+// src/components/settingsComponents/SettingsServices.jsx
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "react-toastify";
