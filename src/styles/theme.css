@@ -1,0 +1,99 @@
+/* src/styles/theme.css
+   Archivo centralizado para clases personalizadas y temas */
+
+:root {
+  --color-primary: #3b82f6;
+  --color-primary-hover: #2563eb;
+  --color-secondary: #1e293b;
+  --color-secondary-light: #334155;
+  --color-bg: #0f172a;
+  --color-text: #f8fafc;
+  --color-muted: #94a3b8;
+  --color-danger: #dc2626;
+  --color-danger-hover: #b91c1c;
+  --color-warning: #facc15;
+}
+
+.btn {
+  @apply px-4 py-2 rounded-lg font-semibold uppercase text-sm transition;
+}
+
+.btn-primary {
+  @apply bg-[color:var(--color-primary)] text-white hover:bg-[color:var(--color-primary-hover)];
+}
+
+.btn-danger {
+  @apply bg-[color:var(--color-danger)] text-white hover:bg-[color:var(--color-danger-hover)];
+}
+
+.btn-muted {
+  @apply bg-[color:var(--color-secondary-light)] text-white hover:bg-[color:var(--color-secondary)];
+}
+
+.btn-warning {
+  @apply bg-[color:var(--color-warning)] text-white hover:bg-yellow-600;
+}
+
+.nav-link {
+  @apply flex-1 text-center p-3 uppercase font-extrabold transition;
+}
+
+.nav-link-active {
+  @apply bg-[color:var(--color-primary)] text-white;
+}
+
+.nav-link-inactive {
+  @apply bg-white text-[color:var(--color-primary)] hover:bg-[color:var(--color-primary-hover)] hover:text-white;
+}
+
+.card {
+  @apply bg-white rounded-lg shadow p-4;
+}
+
+.card-dark {
+  @apply bg-[color:var(--color-secondary)] text-white rounded-lg shadow p-4;
+}
+
+.card-hover {
+  @apply transition-all duration-300 cursor-pointer rounded-xl border p-5;
+}
+
+.card-selected {
+  @apply bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg border-blue-500;
+}
+
+.card-unselected {
+  @apply bg-white/5 hover:bg-white/10 shadow-md hover:shadow-xl border-gray-700;
+}
+
+.card-disabled {
+  @apply opacity-50 cursor-not-allowed hover:bg-white/5;
+}
+
+.card-check {
+  @apply absolute top-0.5 right-0.5 bg-white text-blue-600 rounded-full p-1;
+}
+
+.section-title {
+  @apply text-4xl font-extrabold text-white mb-3;
+}
+
+.section-subtitle {
+  @apply text-lg text-white;
+}
+
+.section-container {
+  @apply mt-10 max-w-6xl mx-auto;
+}
+
+.alert-error {
+  @apply p-4 bg-red-900/50 border border-red-600 rounded-lg text-red-100 flex items-center justify-between animate-pulse;
+}
+
+.alert-warning {
+  @apply bg-yellow-900/50 border border-yellow-600 text-yellow-100 px-4 py-3 rounded-lg mt-5 flex items-center;
+}
+
+.alert-error-retry {
+  @apply bg-red-900/50 border border-red-600 text-red-100 px-4 py-3 rounded-lg relative mt-5 flex flex-col md:flex-row items-center gap-4;
+}
