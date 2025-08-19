@@ -10,7 +10,7 @@ import AppointmentsLayout from "./layouts/AppointmentsLayout";
 import NewAppointmentLayout from "@/layouts/NewAppointmentLayout";
 import AppointmentView from "@/views/servicesViews/AppointmentView";
 import GenerateTimeSlotsView from "@/views/settingsViews/GenerateTimeSlotsView";
-import SettingsServicesView from "@/views/settingsViews/settingsServicesView";
+
 import ServicesView from "./views/servicesViews/ServicesView";
 import SettingsHomeView from "./views/settingsViews/SettingsHomeView";
 import SettingsLayout from "./layouts/SettingsLayout";
@@ -24,6 +24,7 @@ import AdminRoute from "./components/authComponents/AdminRoute";
 import ProtectedRoute from "./components/authComponents/ProtectedRoute";
 import GuestRoute from "./components/authComponents/GuestRoute";
 import SupportView from "./views/authViews/SupportView";
+import SettingsServicesView from "./views/settingsViews/SettingsServicesView";
 
 export const router = createBrowserRouter([
   // Auth (solo para invitados)
