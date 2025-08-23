@@ -270,7 +270,7 @@ export default function BrandSettingsPage() {
       {/* Logo */}
       <div className="mt-10 pt-6 border-t border-gray-200">
         <h2 className="text-lg font-semibold text-gray-800 mb-4">
-          Imagen del negocio
+          Imagen del Negocio
         </h2>
 
         <div className="flex flex-col sm:flex-row items-start gap-6">
@@ -313,7 +313,7 @@ export default function BrandSettingsPage() {
                   disabled={deletingLogo}
                   className="ml-3 bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-lg transition-colors font-medium disabled:opacity-70"
                 >
-                  {deletingLogo ? "Eliminando…" : "Eliminar logo"}
+                  {deletingLogo ? "Eliminando…" : "Eliminar imagen"}
                 </button>
               )}
             </div>
