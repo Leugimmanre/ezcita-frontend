@@ -30,7 +30,7 @@ export async function deleteBrandLogo() {
   return data;
 }
 
-// 
+//
 export function getApiOrigin() {
   const base = import.meta.env.VITE_API_URL ?? "/api";
   if (/^https?:\/\//i.test(base)) {
@@ -43,7 +43,7 @@ export function getApiOrigin() {
   return window.location.origin;
 }
 
-// 
+//
 export function toAbsoluteUrl(path) {
   if (!path) return "";
   if (/^https?:\/\//i.test(path)) return path;
