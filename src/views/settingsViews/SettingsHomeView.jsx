@@ -4,7 +4,7 @@ import { useDocumentTitle } from "@/hooks/title";
 
 export default function SettingsHomeView() {
   // Título dinámico
-  useDocumentTitle(`${APP_NAME} | Ajustes`);
+  useDocumentTitle(`Ajustes | ${APP_NAME}`);
 
   return <SettingsHome />;
 }

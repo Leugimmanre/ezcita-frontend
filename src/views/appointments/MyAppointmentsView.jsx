@@ -5,7 +5,7 @@ import { APP_NAME } from "@/data/index";
 
 export default function MyAppointmentsView() {
   // Título dinamico
-  useDocumentTitle(`${APP_NAME} | Mis Citas`);
+  useDocumentTitle(`Mis Citas | ${APP_NAME}`);
 
   return <MyAppointments />;
 }

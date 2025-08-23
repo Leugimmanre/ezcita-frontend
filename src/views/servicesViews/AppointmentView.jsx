@@ -10,7 +10,7 @@ import { APP_NAME } from "@/data/index";
 import { useAppointmentsData } from "@/hooks/useAppointmentsData";
 
 export default function AppointmentView() {
-  useDocumentTitle(`${APP_NAME} | Cita `);
+  useDocumentTitle(`Cita$ | {APP_NAME} `);
   const navigate = useNavigate();
 
   const { selectedServices, setSelectedServices, setAppointmentDetails } =

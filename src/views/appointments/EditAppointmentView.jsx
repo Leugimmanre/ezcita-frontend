@@ -4,7 +4,7 @@ import { APP_NAME } from "@/data/index";
 
 export default function EditAppointmentView() {
   // Título dinámico
-  useDocumentTitle(`${APP_NAME} | Editar Cita`);
+  useDocumentTitle(`Editar Cita | ${APP_NAME}`);
 
   return <EditAppointment />;
 }
