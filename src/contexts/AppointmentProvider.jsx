@@ -9,7 +9,7 @@ export function AppointmentProvider({ children }) {
   const [staffCount, setStaffCount] = useState(1);
 
   // Obtenemos datos del usuario desde localStorage
-  const userData = JSON.parse(localStorage.getItem("user_BarberShop"));
+  const userData = JSON.parse(localStorage.getItem("user_EzCita"));
 
   // Cargamos configuración de citas
   const { data: settings, errorMessage, saveSettings } = useAppointmentSettings({

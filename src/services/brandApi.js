@@ -1,3 +1,4 @@
+// src/services/brandApi.js
 import api from "@/lib/axios";
 
 // Obtiene la configuración de marca del tenant actual
@@ -48,3 +49,4 @@ export function toAbsoluteUrl(path) {
   if (/^https?:\/\//i.test(path)) return path;
   return getApiOrigin() + path; // p.ej. http://localhost:4000 + /static/...
 }
+

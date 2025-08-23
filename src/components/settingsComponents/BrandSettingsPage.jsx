@@ -4,7 +4,8 @@ import {
   updateBrandSettings,
   uploadBrandLogo,
   deleteBrandLogo,
-} from "@/services/brandApi";
+  toAbsoluteUrl,
+} from "@/services/brandAPI";
 import { toast } from "react-toastify";
 
 // Lista corta de zonas horarias comunes (amplíala si quieres)
@@ -269,19 +270,19 @@ export default function BrandSettingsPage() {
       {/* Logo */}
       <div className="mt-10 pt-6 border-t border-gray-200">
         <h2 className="text-lg font-semibold text-gray-800 mb-4">
-          Logo del negocio
+          Imagen del negocio
         </h2>
 
         <div className="flex flex-col sm:flex-row items-start gap-6">
           <div className="w-40 h-40 border border-gray-300 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
             {hasLogo ? (
               <img
-                src={brand.logo.url}
+                src={toAbsoluteUrl(brand.logo?.url)}
                 alt="Logo actual"
                 className="object-contain w-full h-full"
               />
             ) : (
-              <span className="text-sm text-gray-500">Sin logo</span>
+              <span className="text-sm text-gray-500">Sin imagen</span>
             )}
           </div>
 
@@ -295,7 +296,7 @@ export default function BrandSettingsPage() {
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200 cursor-pointer"
                   } transition-colors font-medium`}
                 >
-                  {uploading ? "Subiendo…" : "Subir / Reemplazar logo"}
+                  {uploading ? "Subiendo…" : "Subir / Reemplazar imagen"}
                 </span>
                 <input
                   type="file"

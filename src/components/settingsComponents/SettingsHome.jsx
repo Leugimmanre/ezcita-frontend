@@ -6,7 +6,7 @@ import { Navigate, Outlet } from "react-router-dom";
 
 export default function SettingsHome() {
 
-  const userData = JSON.parse(localStorage.getItem("user_BarberShop"));
+  const userData = JSON.parse(localStorage.getItem("user_EzCita"));
 
   if (!userData || userData.role !== "admin") {
     return <Navigate to="/appointments/my-appointments" replace />;

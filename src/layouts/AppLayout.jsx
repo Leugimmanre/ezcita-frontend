@@ -1,7 +1,7 @@
 // src/layouts/AppLayout.jsx
 import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { getBrandSettings, toAbsoluteUrl } from "@/services/brandApi";
+import { getBrandSettings, toAbsoluteUrl } from "@/services/brandAPI";
 
 export default function AppLayout() {
   const [userName, setUserName] = useState("");
@@ -12,7 +12,7 @@ export default function AppLayout() {
 
   // Cargar el nombre de usuario desde localStorage
   useEffect(() => {
-    const storedUser = localStorage.getItem("user_BarberShop");
+    const storedUser = localStorage.getItem("user_EzCita");
     if (storedUser) {
       const user = JSON.parse(storedUser);
       setUserName(user.name || "Usuario");
@@ -41,7 +41,7 @@ export default function AppLayout() {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("user_BarberShop");
+    localStorage.removeItem("user_EzCita");
     localStorage.removeItem("tenantId");
     setShowLogoutConfirm(false);
     navigate("/");
@@ -68,9 +68,7 @@ export default function AppLayout() {
       <div className="w-full md:w-2/3 px-4 sm:px-6 lg:px-10 py-6 overflow-y-auto bg-gray-900 text-white flex flex-col">
         {/* Encabezado */}
         <header className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start mb-6">
-          <h1 className="text-3xl lg:text-5xl font-extrabold">
-            {brandName}
-          </h1>
+          <h1 className="text-3xl lg:text-5xl font-extrabold">{brandName}</h1>
 
           <div className="flex flex-col sm:items-end gap-4">
             <div className="flex sm:flex-row items-start justify-between sm:items-center gap-3 bg-gray-800 p-3 rounded-lg shadow-md">

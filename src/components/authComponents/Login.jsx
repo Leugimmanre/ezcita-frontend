@@ -12,7 +12,7 @@ export default function Login() {
       const userData = await loginUser(data);
 
       // Guardar datos del usuario para AppLayout
-      localStorage.setItem("user_BarberShop", JSON.stringify(userData));
+      localStorage.setItem("user_EzCita", JSON.stringify(userData));
 
       toast.success(`Bienvenida/o ${userData.name} ${userData.lastname}`);
 

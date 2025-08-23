@@ -15,7 +15,7 @@ const SettingsLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-    const userData = JSON.parse(localStorage.getItem("user_BarberShop"));
+    const userData = JSON.parse(localStorage.getItem("user_EzCita"));
 
   if (!userData || userData.role !== "admin") {
     return <Navigate to="/appointments/my-appointments" replace />;
@@ -31,7 +31,7 @@ const SettingsLayout = () => {
   const handleLogout = () => {
     // Eliminar token de autenticación y datos de usuario
     localStorage.removeItem("token");
-    localStorage.removeItem("user_BarberShop");
+    localStorage.removeItem("user_EzCita");
     localStorage.removeItem("tenantId");
 
     // Redirigir a la página de login
