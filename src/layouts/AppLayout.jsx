@@ -1,7 +1,7 @@
 // src/layouts/AppLayout.jsx
 import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { getBrandSettings, toAbsoluteUrl } from "@/services/brandAPI";
+import { getBrandSettings, toAbsoluteUrl } from "@/services/brandApi";
 
 export default function AppLayout() {
   const [userName, setUserName] = useState("");

@@ -5,7 +5,7 @@ import {
   uploadBrandLogo,
   deleteBrandLogo,
   toAbsoluteUrl,
-} from "@/services/brandAPI";
+} from "@/services/brandApi";
 import { toast } from "react-toastify";
 
 // Lista corta de zonas horarias comunes (amplíala si quieres)

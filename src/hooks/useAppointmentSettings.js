@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getAppointmentSettings,
   saveAppointmentSettings,
-} from "@/services/appointmentSettingsAPI";
+} from "@/services/appointmentSettingsApi";
 import { getToken } from "@/utils/authStorage";
 import { getTenantId } from "@/utils/tenantStorage";
 

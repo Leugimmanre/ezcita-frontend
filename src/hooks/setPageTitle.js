@@ -1,5 +1,5 @@
 // middlewares/setPageTitle.js
-import { getBrandSettings } from "@/services/brandAPI";
+import { getBrandSettings } from "@/services/brandApi";
 
 let cachedBrandName = null;
 
