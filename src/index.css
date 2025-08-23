@@ -1,7 +1,16 @@
 @import "tailwindcss";
 @import "./styles/theme.css";
 
-/* Clase personalizada para la imagen de fondo */
+/* Clase para usar imagen dinámica del backend */
 .bgimage {
-  background-image: url('/img/1.jpg');
+  /* la URL vendrá por una variable inline */
+  background-image: var(--bg-url);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
+
+/* Clase personalizada para la imagen de fondo */
+/* .bgimage {
+  background-image: url('/img/1.jpg');
+} */

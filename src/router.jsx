@@ -25,6 +25,7 @@ import ProtectedRoute from "@/components/authComponents/ProtectedRoute";
 import GuestRoute from "@/components/authComponents/GuestRoute";
 import SupportView from "@/views/authViews/SupportView";
 import SettingsServicesView from "@/views/settingsViews/SettingsServicesView";
+import BrandSettingsPageView from "./views/authViews/BrandSettingsPageView";
 
 export const router = createBrowserRouter([
   // Auth (solo para invitados)
@@ -86,6 +87,7 @@ export const router = createBrowserRouter([
           { path: "staff", element: <SettingsStaffView /> },
           { path: "appointments", element: <SettingsAppointmentsView /> },
           { path: "users", element: <UsersView /> },
+          { path: "brand", element: <BrandSettingsPageView />, },
         ],
       },
     ],

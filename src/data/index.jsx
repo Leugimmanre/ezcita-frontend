@@ -9,6 +9,7 @@ import {
   ChartBarIcon,
   ShieldCheckIcon,
   BellIcon,
+  BuildingOfficeIcon,
 } from "@heroicons/react/24/outline";
 
 // tenantId de  la aplicación
@@ -57,6 +58,12 @@ export const navigation = [
     href: "/settings/appointments",
     icon: CalendarIcon,
     // current: location.pathname.includes("/settings/appointments "),
+  },
+  {
+    name: "Empresa",
+    href: "/settings/brand",
+    icon: BuildingOfficeIcon,
+    // current: location.pathname.includes("/settings/brand"),
   },
   {
     name: "Pagos",
@@ -117,6 +124,15 @@ export const settingCategories = [
     icon: <CalendarIcon className="h-8 w-8 text-red-500" />,
     path: "/settings/appointments",
     color: "bg-red-50 text-red-700 hover:bg-red-100",
+  },
+  {
+    id: "empresa",
+    title: "Empresa",
+    description:
+      "Gestiona la información de tu empresa, logo y detalles de marca",
+    icon: <BuildingOfficeIcon className="h-8 w-8 text-emerald-500" />,
+    path: "/settings/brand",
+    color: "bg-emerald-50 text-emerald-700 hover:bg-emerald-100",
   },
   {
     id: "pagos",

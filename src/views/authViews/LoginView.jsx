@@ -1,3 +1,4 @@
+// src/views/authViews/LoginView.jsx
 import Login from "@/components/authComponents/Login";
 import { APP_NAME } from "@/data/index";
 import { useDocumentTitle } from "@/hooks/title";

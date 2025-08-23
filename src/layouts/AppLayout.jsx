@@ -1,9 +1,12 @@
+// src/layouts/AppLayout.jsx
 import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { getBrandSettings, toAbsoluteUrl } from "@/services/brandApi";
 
 export default function AppLayout() {
   const [userName, setUserName] = useState("");
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [brand, setBrand] = useState(null); // { brandName, logo:{url,...}, ... }
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -18,6 +21,24 @@ export default function AppLayout() {
     }
   }, [navigate]);
 
+  // Cargar marca (logo, nombre, etc.) desde backend
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const data = await getBrandSettings();
+        if (!mounted) return;
+        setBrand(data || null);
+      } catch {
+        // en caso de error, deja brand en null (usaremos fallback)
+        setBrand(null);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user_BarberShop");
@@ -26,16 +47,30 @@ export default function AppLayout() {
     navigate("/");
   };
 
+  // URL de fondo desde el backend (absoluta)
+  const bgUrl = brand?.logo?.url ? toAbsoluteUrl(brand.logo.url) : null;
+  // Nombre de marca
+  const brandName = brand?.brandName || "Mi Negocio";
+
   return (
     <div className="flex flex-col md:flex-row h-screen">
-      {/* Imagen de fondo a la izquierda */}
-      <div className="h-64 md:h-auto md:w-1/3 bg-cover bg-center bgimage" />
+      {/* Imagen de fondo a la izquierda (desde backend) */}
+      <div
+        className="h-64 md:h-auto md:w-1/3 bg-cover bg-center"
+        style={
+          bgUrl
+            ? { backgroundImage: `url(${bgUrl})` }
+            : { backgroundColor: "#111827" } // fallback si no hay logo
+        }
+      />
 
       {/* Contenido principal */}
       <div className="w-full md:w-2/3 px-4 sm:px-6 lg:px-10 py-6 overflow-y-auto bg-gray-900 text-white flex flex-col">
         {/* Encabezado */}
         <header className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start mb-6">
-          <h1 className="text-3xl lg:text-5xl font-extrabold">BarberShop</h1>
+          <h1 className="text-3xl lg:text-5xl font-extrabold">
+            {brandName}
+          </h1>
 
           <div className="flex flex-col sm:items-end gap-4">
             <div className="flex sm:flex-row items-start justify-between sm:items-center gap-3 bg-gray-800 p-3 rounded-lg shadow-md">
