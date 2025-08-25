@@ -1,7 +1,7 @@
 // src/lib/axios.js
 import axios from "axios";
 import { getToken, clearToken } from "@/utils/authStorage";
-import { getTenantId, setTenantId } from "@/utils/tenantStorage";
+import { getTenantId /*, setTenantId*/ } from "@/utils/tenantStorage"; // <-- cambia import
 import { clearStoredUser } from "@/utils/userStorage";
 
 const api = axios.create({
@@ -14,7 +14,7 @@ const api = axios.create({
 });
 
 // ─────────────────────────────────────────────────────────────
-// Request: añade Authorization y x-tenant-id (con fallback)
+// Request: añade Authorization y x-tenant-id (en runtime)
 // ─────────────────────────────────────────────────────────────
 api.interceptors.request.use(
   (config) => {
@@ -22,17 +22,22 @@ api.interceptors.request.use(
     const token = getToken();
     if (token) config.headers.Authorization = `Bearer ${token}`;
 
-    // Tenant: primero localStorage; si no hay, usa .env y persiste
-    let tenantId = getTenantId();
-    if (!tenantId) {
-      tenantId = import.meta.env.VITE_TENANT_ID || "default";
-      try {
-        setTenantId(tenantId);
-      } catch {
-        // noop
-      }
-    }
+    // Tenant dinámico (subdominio / ruta / query) con persistencia automática
+    const tenantId = getTenantId();
     if (tenantId) config.headers["x-tenant-id"] = tenantId;
+
+    // (Opcional) Algunos endpoints (p.ej. /auth) esperan tenant en el body:
+    const method = (config.method || "get").toLowerCase();
+    const wantsBody =
+      method === "post" || method === "put" || method === "patch";
+    if (
+      wantsBody &&
+      config.data &&
+      typeof config.data === "object" &&
+      !("tenantId" in config.data)
+    ) {
+      config.data = { ...config.data, tenantId };
+    }
 
     return config;
   },
@@ -40,27 +45,25 @@ api.interceptors.request.use(
 );
 
 // ─────────────────────────────────────────────────────────────
-// Response: manejo global de 401/403
+// Response: manejo global de 401/403 (tu lógica tal cual)
 // ─────────────────────────────────────────────────────────────
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error?.response?.status;
 
-    // 401: token inválido/expirado -> limpiar sesión y mandar a login
     if (status === 401) {
       try {
         clearToken();
         clearStoredUser();
-      } catch {
-        // noop
+      } catch (err) {
+        console.log(err);
       }
       if (typeof window !== "undefined" && window.location.pathname !== "/") {
         window.location.assign("/");
       }
     }
 
-    // 403: sin permisos (p.ej. no admin intentando entrar a /settings)
     if (status === 403) {
       if (
         typeof window !== "undefined" &&
