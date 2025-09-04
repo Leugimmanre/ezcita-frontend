@@ -16,7 +16,7 @@ import SettingsHomeView from "@/views/settingsViews/SettingsHomeView";
 import SettingsLayout from "@/layouts/SettingsLayout";
 import MyAppointmentsView from "@/views/appointments/MyAppointmentsView";
 import ForgotPasswordView from "@/views/authViews/ForgotPasswordView";
-import UsersView from "@/views/usersView/UsersView";
+import UsersView from "./views/usersView/UsersView";
 import EditAppointmentView from "@/views/appointments/EditAppointmentView";
 import SettingsStaffView from "@/views/settingsViews/SettingsStaffView";
 import SettingsAppointmentsView from "@/views/settingsViews/SettingsAppointmentsView";
@@ -26,6 +26,7 @@ import GuestRoute from "@/components/authComponents/GuestRoute";
 import SupportView from "@/views/authViews/SupportView";
 import SettingsServicesView from "@/views/settingsViews/SettingsServicesView";
 import BrandSettingsPageView from "./views/authViews/BrandSettingsPageView";
+import UserDetailsView from "./views/usersView/UserDetailsView";
 
 export const router = createBrowserRouter([
   // Auth (solo para invitados)
@@ -87,6 +88,7 @@ export const router = createBrowserRouter([
           { path: "staff", element: <SettingsStaffView /> },
           { path: "appointments", element: <SettingsAppointmentsView /> },
           { path: "users", element: <UsersView /> },
+          { path: "users/:id", element: <UserDetailsView /> },
           { path: "brand", element: <BrandSettingsPageView />, },
         ],
       },

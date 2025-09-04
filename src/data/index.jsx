@@ -4,6 +4,7 @@ import {
   ClockIcon,
   BeakerIcon,
   UserGroupIcon,
+  UserIcon,
   CreditCardIcon,
   CalendarIcon,
   ChartBarIcon,
@@ -27,7 +28,7 @@ export const daysOfWeek = [
   { id: 5, name: "Viernes" },
   { id: 6, name: "Sábado" },
 ];
-// Iconos de navegación
+// Iconos de navegación sidebar
 export const navigation = [
   {
     name: "Dashboard",
@@ -58,6 +59,12 @@ export const navigation = [
     href: "/settings/appointments",
     icon: CalendarIcon,
     // current: location.pathname.includes("/settings/appointments "),
+  },
+  {
+    name: "Usuarios",
+    href: "/settings/users",
+    icon: UserIcon,
+    // current: location.pathname.includes("/settings/users "),
   },
   {
     name: "Empresa",
@@ -126,13 +133,21 @@ export const settingCategories = [
     color: "bg-red-50 text-red-700 hover:bg-red-100",
   },
   {
+    id: "usuarios",
+    title: "Usuarios",
+    description: "Personaliza reglas de reservas y recordatorios",
+    icon: <UserIcon className="h-8 w-8 text-blue-500" />,
+    path: "/settings/users",
+    color: "bg-blue-50 text-blue-700 hover:bg-blue-100",
+  },
+  {
     id: "empresa",
     title: "Empresa",
     description:
       "Gestiona la información de tu empresa, logo y detalles de marca",
-    icon: <BuildingOfficeIcon className="h-8 w-8 text-emerald-500" />,
+    icon: <BuildingOfficeIcon className="h-8 w-8 text-purple-500" />,
     path: "/settings/brand",
-    color: "bg-emerald-50 text-emerald-700 hover:bg-emerald-100",
+    color: "bg-purple-50 text-purple-700 hover:bg-purple-100",
   },
   {
     id: "pagos",
