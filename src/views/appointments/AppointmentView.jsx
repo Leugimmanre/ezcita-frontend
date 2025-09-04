@@ -7,10 +7,12 @@ import { useEffect } from "react";
 import { useAppointmentSettings } from "@/hooks/useAppointmentSettings";
 import { useDocumentTitle } from "@/hooks/title";
 import { APP_NAME } from "@/data/index";
+import { useBrandName } from "@/hooks/useBrandName";
 import { useAppointmentsData } from "@/hooks/useAppointmentsData";
 
 export default function AppointmentView() {
-  useDocumentTitle(`Nueva Cita | ${APP_NAME}`);
+  const { brandName } = useBrandName(APP_NAME);
+  useDocumentTitle(`Nueva Cita | ${brandName}`);
   const navigate = useNavigate();
   const { selectedServices, setSelectedServices } = useAppointment();
   const { data: settings, isLoading } = useAppointmentSettings();

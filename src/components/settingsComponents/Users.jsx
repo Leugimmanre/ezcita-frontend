@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUsersData } from "@/hooks/useUsersData";
 import CreateUserModal from "../settingsComponents/CreateUserModal";
-import EditUserModal from "./EditUserModal"; // Asegúrate de tener este componente
+import EditUserModal from "./EditUserModal";
 import { toast } from "react-toastify";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
@@ -12,7 +12,7 @@ export default function Users() {
     useUsersData();
 
   const [showCreate, setShowCreate] = useState(false);
-  const [editId, setEditId] = useState(null); // Estado para el modal de edición
+  const [editId, setEditId] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);

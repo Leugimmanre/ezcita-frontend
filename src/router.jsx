@@ -10,7 +10,6 @@ import AppointmentsLayout from "@/layouts/AppointmentsLayout";
 import NewAppointmentLayout from "@/layouts/NewAppointmentLayout";
 import AppointmentView from "@/views/servicesViews/AppointmentView";
 import GenerateTimeSlotsView from "@/views/settingsViews/GenerateTimeSlotsView";
-
 import ServicesView from "@/views/servicesViews/ServicesView";
 import SettingsHomeView from "@/views/settingsViews/SettingsHomeView";
 import SettingsLayout from "@/layouts/SettingsLayout";

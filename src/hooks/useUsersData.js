@@ -17,6 +17,8 @@ export const useUsersData = () => {
     isLoading,
     isError,
     error,
+    refetch,
+    isFetching,
   } = useQuery({
     queryKey: USERS_KEY,
     queryFn: getUsers,
@@ -43,6 +45,9 @@ export const useUsersData = () => {
     isLoading,
     isError,
     error,
+    refetch,
+    isFetching,
+
     // acciones
     createUser: createMutation.mutate,
     createUserAsync: createMutation.mutateAsync,

@@ -2,10 +2,12 @@
 import BrandSettingsPage from "@/components/settingsComponents/BrandSettingsPage";
 import { APP_NAME } from "@/data/index";
 import { useDocumentTitle } from "@/hooks/title";
+import { useBrandName } from "@/hooks/useBrandName";
 
 export default function BrandSettingsPageView() {
   // Título dinámico
-  useDocumentTitle(`Marca | ${APP_NAME}`);
+  const { brandName } = useBrandName(APP_NAME);
+  useDocumentTitle(`Marca | ${brandName}`);
 
   return <BrandSettingsPage />;
 }
