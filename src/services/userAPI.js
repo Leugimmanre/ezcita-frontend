@@ -12,6 +12,12 @@ export const getUserById = async (id) => {
   return data.data;
 };
 
+// Obtener el usuario autenticado
+export async function getMe() {
+  const { data } = await api.get("/users/me");
+  return data?.data ?? null;
+}
+
 // Crear usuario
 export const createUser = async (userData) => {
   const { data } = await api.post("/users", userData);

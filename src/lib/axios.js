@@ -7,7 +7,6 @@ import { clearStoredUser } from "@/utils/userStorage";
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? "/api",
   headers: {
-    "Content-Type": "application/json",
     Accept: "application/json",
   },
   timeout: 15000,
@@ -33,7 +32,18 @@ api.interceptors.request.use(
       }
     }
     if (tenantId) config.headers["x-tenant-id"] = tenantId;
+    // Si es FormData, NO fijes Content-Type (deja que el navegador ponga el boundary)
+    const isFormData =
+      typeof FormData !== "undefined" && config.data instanceof FormData;
 
+    if (isFormData) {
+      // Axios v1 usa AxiosHeaders; soporta .delete/.set
+      if (typeof config.headers?.delete === "function") {
+        config.headers.delete("Content-Type");
+      } else if (config.headers && config.headers["Content-Type"]) {
+        delete config.headers["Content-Type"];
+      }
+    }
     return config;
   },
   (error) => Promise.reject(error)

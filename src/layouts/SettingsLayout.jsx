@@ -1,21 +1,30 @@
 // src/layouts/SettingsLayout.jsx
 import React, { useState } from "react";
-import { Link, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
+import {
+  Link,
+  Navigate,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import {
   XMarkIcon,
   Bars3Icon,
   CalendarIcon,
-  ArrowRightOnRectangleIcon,
+  ArrowRightEndOnRectangleIcon,
+  UserCircleIcon,
 } from "@heroicons/react/24/outline";
 import { navigation } from "../data";
+import { useAuthUser } from "@/hooks/useAuthUser";
 
 const SettingsLayout = () => {
   // Estado para el sidebar móvil
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, isLoading } = useAuthUser();
 
-    const userData = JSON.parse(localStorage.getItem("user_EzCita"));
+  const userData = JSON.parse(localStorage.getItem("user_EzCita"));
 
   if (!userData || userData.role !== "admin") {
     return <Navigate to="/appointments/my-appointments" replace />;
@@ -125,7 +134,7 @@ const SettingsLayout = () => {
                 onClick={handleLogout}
                 className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md"
               >
-                <ArrowRightOnRectangleIcon className="mr-3 h-5 w-5 text-gray-400" />
+                <ArrowRightEndOnRectangleIcon className="mr-3 h-5 w-5 text-gray-400" />
                 Cerrar sesión
               </button>
             </div>
@@ -168,18 +177,14 @@ const SettingsLayout = () => {
             <div className="px-4 py-4 border-t border-gray-200">
               <div className="flex items-center mb-3">
                 <div className="flex-shrink-0">
-                  <img
-                    className="h-10 w-10 rounded-full"
-                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                    alt=""
-                  />
+                  <UserCircleIcon className="h-10 w-10 rounded-full" />
                 </div>
                 <div className="ml-3">
                   <p className="text-sm font-medium text-gray-700">
-                    Admin User
+                    {isLoading ? "Cargando..." : user?.name || "Admin User"}
                   </p>
                   <Link
-                    to="#"
+                    to="/settings/profile"
                     className="text-xs font-medium text-gray-500 hover:text-gray-700"
                   >
                     Ver perfil
@@ -200,7 +205,7 @@ const SettingsLayout = () => {
                   onClick={handleLogout}
                   className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md"
                 >
-                  <ArrowRightOnRectangleIcon className="mr-3 h-5 w-5 text-gray-400" />
+                  <ArrowRightEndOnRectangleIcon className="mr-3 h-5 w-5 text-gray-400" />
                   Cerrar sesión
                 </button>
               </div>

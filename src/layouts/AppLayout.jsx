@@ -73,7 +73,7 @@ export default function AppLayout() {
           <div className="flex flex-col sm:items-end gap-4">
             <div className="flex sm:flex-row items-start justify-between sm:items-center gap-3 bg-gray-800 p-3 rounded-lg shadow-md">
               <div className="text-left sm:text-right">
-                <p className="text-sm text-gray-300">Bienvenido, {userName}</p>
+                <p className="text-sm text-gray-300">Hola, {userName}</p>
               </div>
               {/* Botón de cierre de sesión con icono */}
               <div className="relative">

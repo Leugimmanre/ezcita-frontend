@@ -30,6 +30,14 @@ const SettingsServiceItems = ({ service, onEdit, onDelete }) => {
               </span>
             )}
           </div>
+          {/* Imagen principal del servicio */}
+          {service.images?.length > 0 && (
+            <img
+              src={service.images[0].url}
+              alt={service.images[0].alt || service.name}
+              className="h-12 w-12 rounded-md object-cover border"
+            />
+          )}
 
           {service.description && (
             <p className="text-sm text-gray-600">{service.description}</p>

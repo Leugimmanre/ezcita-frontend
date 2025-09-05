@@ -26,6 +26,7 @@ import SupportView from "@/views/authViews/SupportView";
 import SettingsServicesView from "@/views/settingsViews/SettingsServicesView";
 import BrandSettingsPageView from "./views/authViews/BrandSettingsPageView";
 import UserDetailsView from "./views/usersView/UserDetailsView";
+import MyProfileView from "./views/usersView/MyProfileView";
 
 export const router = createBrowserRouter([
   // Auth (solo para invitados)
@@ -89,6 +90,7 @@ export const router = createBrowserRouter([
           { path: "users", element: <UsersView /> },
           { path: "users/:id", element: <UserDetailsView /> },
           { path: "brand", element: <BrandSettingsPageView />, },
+          { path: "profile", element: <MyProfileView />, },
         ],
       },
     ],

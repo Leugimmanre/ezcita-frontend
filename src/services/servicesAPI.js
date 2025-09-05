@@ -30,3 +30,27 @@ export const deleteService = async (id) => {
   const response = await api.delete(`/services/${id}`);
   return response.data;
 };
+
+// Subir UNA imagen a un servicio
+export const uploadServiceImage = async ({ serviceId, file, alt = "" }) => {
+  // Usar FormData para multipart
+  const formData = new FormData();
+  formData.append("file", file);
+  if (alt) formData.append("alt", alt);
+
+  const response = await api.post(`/services/${serviceId}/images`, formData, {
+    headers: {
+      // No fuerces Content-Type: axios lo gestiona con boundary
+      // "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data.data || response.data;
+};
+
+// Eliminar UNA imagen del servicio
+export const deleteServiceImage = async ({ serviceId, publicId }) => {
+  const { data } = await api.delete(`/services/${serviceId}/images`, {
+    params: { publicId },
+  });
+  return data.data;
+};

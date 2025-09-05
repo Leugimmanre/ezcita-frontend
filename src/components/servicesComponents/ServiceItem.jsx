@@ -33,6 +33,20 @@ export default function ServiceItem({
               <h3 className="font-semibold text-lg text-white">
                 {service.name}
               </h3>
+              {/* Imagen principal del servicio - MEJORADO */}
+              {service.images?.length > 0 && (
+                <div className="mb-3 rounded-lg overflow-hidden border border-gray-700 bg-gray-900 flex justify-center items-center h-48">
+                  <img
+                    src={service.images[0].url}
+                    alt={service.images[0].alt || service.name}
+                    className="max-h-full max-w-full object-contain"
+                    onError={(e) => {
+                      e.target.src = "/images/placeholder-service.jpg";
+                      e.target.className = "w-full h-48 object-cover";
+                    }}
+                  />
+                </div>
+              )}
               <div className="flex items-center space-x-1 mt-1">
                 <TagIcon className="h-4 w-4 text-gray-400" />
                 <p className="text-sm text-gray-400 mt-0">{service.category}</p>
@@ -42,7 +56,6 @@ export default function ServiceItem({
               {formattedPrice}
             </span>
           </div>
-
           {/* Descripción del servicio */}
           {service.description && (
             <div className="flex items-center space-x-1 mt-1">
@@ -60,7 +73,7 @@ export default function ServiceItem({
         </div>
 
         <Button
-        className="mt-3 w-full"
+          className="mt-3 w-full"
           variant={isSelected ? "primary" : "secondary"}
           size="sm"
           icon={
