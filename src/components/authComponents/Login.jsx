@@ -35,14 +35,14 @@ export default function Login() {
         </h2>
         <LoginForm onSubmit={handleLoginSubmit} />
 
-        <div className="mt-4 text-center">
+        {/* <div className="mt-4 text-center">
           <Link
             to="/forgot-password"
             className="text-blue-600 hover:underline text-sm"
           >
             ¿Olvidaste tu contraseña?
           </Link>
-        </div>
+        </div> */}
       </div>
     </div>
   );
