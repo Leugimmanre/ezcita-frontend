@@ -14,7 +14,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 // tenantId de  la aplicación
-export const APP_NAME = "BarberShop";
+export const APP_NAME = "Mi Empresa";
 
 // Cambia este valor para ajustar el límite de selección de servicios
 export const MAX_SERVICES_SELECTION = 2;
