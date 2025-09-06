@@ -65,3 +65,10 @@ export const loginUser = async (credentials, tenantOverride) => {
 
   return data.data;
 };
+
+// Cambiar contraseña de un usuario
+export const changePassword = async (id, payload) => {
+  // payload: { currentPassword, newPassword }
+  const { data } = await api.patch(`/users/${id}/password`, payload);
+  return data.data; // asumiendo { success, data }
+};

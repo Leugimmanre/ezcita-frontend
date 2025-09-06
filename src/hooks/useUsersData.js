@@ -5,6 +5,7 @@ import {
   createUser as createUserAPI,
   updateUser as updateUserAPI,
   deleteUser as deleteUserAPI,
+  changePassword as changePasswordAPI,
 } from "@/services/userAPI";
 
 const USERS_KEY = ["users"];
@@ -39,6 +40,16 @@ export const useUsersData = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: USERS_KEY }),
   });
 
+  // Mutación para cambiar contraseña
+  const updatePasswordMutation = useMutation({
+    mutationFn: ({ id, currentPassword, newPassword }) =>
+      changePasswordAPI(id, { currentPassword, newPassword }),
+    // No invalido lista completa por seguridad; si quieres, puedes refetch ["me"]
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["me"] });
+    },
+  });
+
   return {
     // datos
     users,
@@ -49,16 +60,21 @@ export const useUsersData = () => {
     isFetching,
 
     // acciones
+    // Crear usuario
     createUser: createMutation.mutate,
     createUserAsync: createMutation.mutateAsync,
     isCreating: createMutation.isPending,
-
+    // Actualizar usuario
     updateUser: updateMutation.mutate,
     updateUserAsync: updateMutation.mutateAsync,
     isUpdating: updateMutation.isPending,
-
+    //  Eliminar usuario
     deleteUser: deleteMutation.mutate,
     deleteUserAsync: deleteMutation.mutateAsync,
     isDeleting: deleteMutation.isPending,
+    // Cambiar contraseña
+    updatePassword: updatePasswordMutation.mutate,
+    updatePasswordAsync: updatePasswordMutation.mutateAsync,
+    isUpdatingPassword: updatePasswordMutation.isPending,
   };
 };

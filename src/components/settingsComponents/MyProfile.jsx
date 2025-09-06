@@ -25,7 +25,7 @@ export default function MyProfile() {
     handleSubmit: handleSubmitPassword,
     reset: resetPassword,
     formState: { errors: errorsPassword },
-    watch,
+    watch: watchPassword,
   } = useForm();
 
   // Cuando cargue, setea valores
@@ -394,7 +394,7 @@ export default function MyProfile() {
               {...registerPassword("confirmPassword", {
                 required: "Por favor confirma tu nueva contraseña",
                 validate: (value) =>
-                  value === watch("newPassword") ||
+                  value === watchPassword("newPassword") ||
                   "Las contraseñas no coinciden",
               })}
             />
