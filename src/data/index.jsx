@@ -74,25 +74,25 @@ export const navigation = [
   },
   {
     name: "Pagos",
-    href: "/settings/payments",
+    href: "/settings/dashboard",
     icon: CreditCardIcon,
     // current: location.pathname.includes("/settings/payments"),
   },
   {
     name: "Reportes",
-    href: "/settings/reports",
+    href: "/settings/dashboard",
     icon: ChartBarIcon,
     // current: location.pathname.includes("/settings/reports"),
   },
   {
     name: "Seguridad",
-    href: "/settings/security",
+    href: "/settings/dashboard",
     icon: ShieldCheckIcon,
     // current: location.pathname.includes("/settings/security"),
   },
   {
     name: "Notificaciones",
-    href: "/settings/notifications",
+    href: "/settings/dashboard",
     icon: BellIcon,
     // current: location.pathname.includes("/settings/notifications"),
   },
@@ -154,7 +154,7 @@ export const settingCategories = [
     title: "Pagos",
     description: "Configura métodos de pago y facturación",
     icon: <CreditCardIcon className="h-8 w-8 text-yellow-500" />,
-    path: "/settings/payments",
+    path: "/settings/dashboard",
     color: "bg-yellow-50 text-yellow-700 hover:bg-yellow-100",
   },
   {
@@ -170,7 +170,7 @@ export const settingCategories = [
     title: "Seguridad",
     description: "Gestiona contraseñas y accesos",
     icon: <ShieldCheckIcon className="h-8 w-8 text-gray-500" />,
-    path: "/settings/security",
+    path: "/settings/dashboard",
     color: "bg-gray-50 text-gray-700 hover:bg-gray-100",
   },
   {
@@ -178,7 +178,7 @@ export const settingCategories = [
     title: "Notificaciones",
     description: "Personaliza alertas y mensajes",
     icon: <BellIcon className="h-8 w-8 text-pink-500" />,
-    path: "/settings/notifications",
+    path: "/settings/dashboard",
     color: "bg-pink-50 text-pink-700 hover:bg-pink-100",
   },
 ];
