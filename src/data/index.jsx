@@ -162,7 +162,7 @@ export const settingCategories = [
     title: "Reportes",
     description: "Configura informes y análisis de negocio",
     icon: <ChartBarIcon className="h-8 w-8 text-indigo-500" />,
-    path: "/settings/reports",
+    path: "/settings",
     color: "bg-indigo-50 text-indigo-700 hover:bg-indigo-100",
   },
   {
