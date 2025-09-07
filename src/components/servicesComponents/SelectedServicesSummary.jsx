@@ -20,12 +20,37 @@ export default function SelectedServicesSummary({
     0
   );
 
+  // === Clases con temas (siguiendo el mismo patrón que MyAppointments) ===
+  const containerClass =
+    "mt-8 p-6 rounded-xl border " +
+    // Tema claro
+    "bg-[var(--color-secondary)] border-[var(--color-secondary-light)] " +
+    // Tema oscuro
+    "dark:bg-gradient-to-r dark:from-blue-900/50 dark:to-indigo-900/50 dark:border-blue-700/50";
+
+  const titleClass =
+    "text-lg font-semibold " + "text-[var(--color-text)] " + "dark:text-white";
+
+  const serviceNameClass =
+    "font-medium " + "text-[var(--color-text)] " + "dark:text-white";
+
+  const serviceDetailsClass =
+    "text-sm " + "text-[var(--color-muted)] " + "dark:text-blue-300";
+
+  const totalLabelClass = "text-[var(--color-muted)] " + "dark:text-blue-300";
+
+  const totalValueClass =
+    "font-semibold text-xl " + "text-[var(--color-text)] " + "dark:text-white";
+
+  const dividerClass =
+    "border-t " +
+    "border-[var(--color-secondary-light)] " +
+    "dark:border-blue-700/30";
+
   return (
-    <div className="mt-8 bg-gray-800 p-6 rounded-xl border border-gray-700">
+    <div className={containerClass}>
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold text-white">
-          Servicios seleccionados
-        </h3>
+        <h3 className={titleClass}>Servicios seleccionados</h3>
         <Button
           variant="secondary"
           size="sm"
@@ -43,8 +68,8 @@ export default function SelectedServicesSummary({
             className="py-3 flex justify-between items-center"
           >
             <div>
-              <p className="font-medium text-white">{service.name}</p>
-              <p className="text-sm text-gray-400">
+              <p className={serviceNameClass}>{service.name}</p>
+              <p className={serviceDetailsClass}>
                 {formatCurrency(service.price)} •{" "}
                 {formatDuration(service.duration, service.durationUnit)}
               </p>
@@ -61,16 +86,16 @@ export default function SelectedServicesSummary({
         ))}
       </ul>
 
-      <div className="mt-5 pt-5 border-t border-gray-700">
+      <div className={`mt-5 pt-5 ${dividerClass}`}>
         <div className="flex justify-between mb-2">
-          <span className="text-gray-300">Total:</span>
-          <span className="font-semibold text-xl text-white">
-            {formatCurrency(totalPrice)}
-          </span>
+          <span className={totalLabelClass}>Total:</span>
+          <span className={totalValueClass}>{formatCurrency(totalPrice)}</span>
         </div>
-        <div className="flex justify-between text-sm text-gray-400 mb-6">
-          <span>Duración total:</span>
-          <span>{formatDuration(totalDuration, "min.")}</span>
+        <div className="flex justify-between text-sm mb-6">
+          <span className={totalLabelClass}>Duración total:</span>
+          <span className={totalLabelClass}>
+            {formatDuration(totalDuration, "min.")}
+          </span>
         </div>
 
         <Button
