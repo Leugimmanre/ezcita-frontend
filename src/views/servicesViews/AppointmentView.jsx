@@ -13,7 +13,7 @@ import { useAppointmentsData } from "@/hooks/useAppointmentsData";
 export default function AppointmentView() {
   // Título dinámico
   const { brandName } = useBrandName(APP_NAME);
-  useDocumentTitle(`Cita$ | ${brandName} `);
+  useDocumentTitle(`Citas | ${brandName} `);
   const navigate = useNavigate();
 
   const { selectedServices, setSelectedServices, setAppointmentDetails } =
