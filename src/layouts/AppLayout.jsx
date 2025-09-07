@@ -2,11 +2,14 @@
 import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { getBrandSettings, toAbsoluteUrl } from "@/services/brandApi";
+import ThemeToggle from "@/components/ThemeToggle";
+import ChangePasswordModal from "@/components/profile/ChangePasswordModal";
 
 export default function AppLayout() {
   const [userName, setUserName] = useState("");
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [brand, setBrand] = useState(null); // { brandName, logo:{url,...}, ... }
+  const [brand, setBrand] = useState(null);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -60,36 +63,67 @@ export default function AppLayout() {
         style={
           bgUrl
             ? { backgroundImage: `url(${bgUrl})` }
-            : { backgroundColor: "#111827" } // fallback si no hay logo
+            : { backgroundColor: "#111827" }
         }
       />
 
       {/* Contenido principal */}
-      <div className="w-full md:w-2/3 px-4 sm:px-6 lg:px-10 py-6 overflow-y-auto bg-gray-900 text-white flex flex-col">
-        {/* Encabezado */}
+      <div className="w-full md:w-2/3 px-4 sm:px-6 lg:px-10 py-6 overflow-y-auto app-surface flex flex-col">
         <header className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start mb-6">
-          <h1 className="text-3xl lg:text-5xl font-extrabold">{brandName}</h1>
+          <h1 className="text-3xl lg:text-5xl font-extrabold text-current transition-colors">
+            {brandName}
+          </h1>
 
           <div className="flex flex-col sm:items-end gap-4">
-            <div className="flex sm:flex-row items-start justify-between sm:items-center gap-3 bg-gray-800 p-3 rounded-lg shadow-md">
+            <div className="flex sm:flex-row items-start justify-between sm:items-center gap-3 bg-gray-100 dark:bg-gray-800 px-3 rounded-lg shadow-md">
+              {/* Botón de cambio de tema */}
+              <ThemeToggle />
               <div className="text-left sm:text-right">
-                <p className="text-sm text-gray-300">Hola, {userName}</p>
+                <p className="text-sm text-gray-700 dark:text-gray-300">
+                  Hola, {userName}
+                </p>
               </div>
+              {/* Botón cambiar contraseña */}
+              <button
+                className="p-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer"
+                onClick={() => setShowPasswordModal(true)}
+                aria-label="Cambiar contraseña"
+                title="Cambiar contraseña"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
               {/* Botón de cierre de sesión con icono */}
               <div className="relative">
                 <button
                   className={`
-                    w-10 h-10 flex items-center justify-center rounded-full
-                    transition-all duration-300 cursor-pointer
-                    ${showLogoutConfirm ? "scale-110" : ""}
-                    shadow-lg
-                  `}
+                              w-10 h-10 flex items-center justify-center rounded-full
+                              transition-all duration-300 cursor-pointer
+                              ${
+                                showLogoutConfirm
+                                  ? "scale-110 bg-red-100 dark:bg-gray-800"
+                                  : "bg-white dark:bg-gray-800"
+                              }
+                              shadow-md hover:shadow-lg
+                              text-gray-600 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400
+                              border border-gray-200 dark:border-gray-700
+                            `}
                   aria-label="Cerrar sesión"
                   onClick={() => setShowLogoutConfirm(!showLogoutConfirm)}
                 >
                   <svg
                     className={`w-5 h-5 transition-transform ${
-                      showLogoutConfirm ? "rotate-90" : ""
+                      showLogoutConfirm ? "rotate-90 text-red-500" : ""
                     }`}
                     fill="none"
                     stroke="currentColor"
@@ -106,23 +140,23 @@ export default function AppLayout() {
 
                 {/* Confirmación de cierre de sesión */}
                 {showLogoutConfirm && (
-                  <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-xl z-10 overflow-hidden border border-red-500">
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl z-10 overflow-hidden border border-red-200 dark:border-red-500 animate-fadeIn">
                     <div className="p-4">
-                      <p className="text-sm text-gray-300 mb-2">
-                        ¿Cerrar sesión?
+                      <p className="text-sm text-gray-700 dark:text-gray-300 mb-3 font-medium">
+                        ¿Estás seguro de que quieres cerrar sesión?
                       </p>
                       <div className="flex justify-end gap-2">
                         <button
-                          className="px-3 py-1 text-sm bg-gray-700 hover:bg-gray-600 rounded transition"
+                          className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded transition-colors"
                           onClick={() => setShowLogoutConfirm(false)}
                         >
                           Cancelar
                         </button>
                         <button
-                          className="px-3 py-1 text-sm bg-red-600 hover:bg-red-700 rounded transition"
+                          className="px-3 py-1.5 text-sm bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white rounded transition-colors"
                           onClick={handleLogout}
                         >
-                          Sí
+                          Sí, salir
                         </button>
                       </div>
                     </div>
@@ -157,6 +191,11 @@ export default function AppLayout() {
           />
         </main>
       </div>
+      {/* Modal para cambiar contraseña */}
+      <ChangePasswordModal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+      />
     </div>
   );
 }

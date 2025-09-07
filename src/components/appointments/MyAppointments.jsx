@@ -21,7 +21,6 @@ export default function MyAppointments() {
     }
   };
 
-  // Función para manejar la reactivación de citas
   const handleReactivate = async (id) => {
     try {
       await reactivateAppointment(id);
@@ -33,64 +32,124 @@ export default function MyAppointments() {
     }
   };
 
-  // Función para manejar el clic en editar
   const handleEditClick = (apptId) => {
     navigate(`/appointments/edit/${apptId}`);
   };
 
-  // Filtrar citas para mostrar solo las que no han sido canceladas hace más de 30 minutos
+  // Solo ocultar canceladas con >30min
   const now = new Date();
   const visibleAppointments = appointments.filter((appt) => {
     if (appt.status === "cancelled") {
-      const cancelledAt = new Date(appt.updatedAt); // usamos updatedAt de Mongo
+      const cancelledAt = new Date(appt.updatedAt);
       const diffMinutes = (now - cancelledAt) / (1000 * 60);
-      return diffMinutes < 30; // mostrar solo si han pasado menos de 30 minutos
+      return diffMinutes < 30;
     }
     return true;
   });
 
+  // === Clases (estructura fija, colores por tema) ===
+  const containerClass = "mt-10 max-w-6xl mx-auto px-4"; // mismo en ambos temas
+
+  const headerClass = "text-center sm:text-left mb-8"; // misma separación en ambos
+
+  const titleClass =
+    "text-4xl font-extrabold text-[var(--color-text)] dark:text-white mb-3";
+
+  const subtitleClass =
+    "text-lg text-[color:color-mix(in_oklab,var(--color-text)_80%,transparent_20%)] dark:text-white";
+
+  const cardClass =
+    "p-5 rounded-xl border shadow-sm " +
+    // claro (tokens)
+    "bg-[var(--color-secondary)] border-[var(--color-secondary-light)] " +
+    // oscuro (tus colores)
+    "dark:bg-gradient-to-r dark:from-blue-900/50 dark:to-indigo-900/50 dark:border-blue-700/50";
+
+  const dateClass =
+    "text-xl font-bold text-[var(--color-text)] dark:text-white";
+
+  const serviceItemClass =
+    "flex justify-between items-center rounded-lg " +
+    "p-3 border bg-[color-mix(in_oklab,var(--color-primary)_8%,var(--color-secondary)_92%)] " +
+    "border-[color-mix(in_oklab,var(--color-primary)_35%,var(--color-secondary-light)_65%)] " +
+    "dark:bg-blue-800/30 dark:border-transparent";
+
+  const serviceTextClass =
+    "font-medium text-[var(--color-text)] dark:text-white";
+
+  const durationPriceClass =
+    "text-sm text-[var(--color-muted)] dark:text-blue-300";
+
+  const totalLabelClass =
+    "text-sm text-[var(--color-muted)] dark:text-blue-300";
+
+  const totalValueClass = "font-bold text-[var(--color-text)] dark:text-white";
+
+  const dividerClass =
+    "mt-3 pt-3 border-t " +
+    "border-[var(--color-secondary-light)] dark:border-blue-700/30";
+
+  // Badges de estado (borde siempre presente para que no cambie la caja)
+  const statusStyles = {
+    pending:
+      "border px-2 py-1 text-xs font-semibold rounded-full " +
+      "bg-[color-mix(in_oklab,#f59e0b_18%,var(--color-secondary)_82%)] " + // amber
+      "text-[#92400e] " +
+      "border-[color-mix(in_oklab,#f59e0b_35%,var(--color-secondary-light)_65%)] " +
+      "dark:bg-yellow-500/20 dark:text-yellow-400 dark:border-transparent",
+    confirmed:
+      "border px-2 py-1 text-xs font-semibold rounded-full " +
+      "bg-[color-mix(in_oklab,#10b981_18%,var(--color-secondary)_82%)] " + // emerald
+      "text-[#065f46] " +
+      "border-[color-mix(in_oklab,#10b981_35%,var(--color-secondary-light)_65%)] " +
+      "dark:bg-green-500/20 dark:text-green-400 dark:border-transparent",
+    cancelled:
+      "border px-2 py-1 text-xs font-semibold rounded-full " +
+      "bg-[color-mix(in_oklab,#ef4444_18%,var(--color-secondary)_82%)] " + // red
+      "text-[#991b1b] " +
+      "border-[color-mix(in_oklab,#ef4444_35%,var(--color-secondary-light)_65%)] " +
+      "dark:bg-red-500/20 dark:text-red-400 dark:border-transparent",
+    completed:
+      "border px-2 py-1 text-xs font-semibold rounded-full " +
+      "bg-[color-mix(in_oklab,#3b82f6_18%,var(--color-secondary)_82%)] " + // blue
+      "text-[#1e40af] " +
+      "border-[color-mix(in_oklab,#3b82f6_35%,var(--color-secondary-light)_65%)] " +
+      "dark:bg-blue-500/20 dark:text-blue-400 dark:border-transparent",
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-2 border-[var(--color-primary)] border-t-transparent dark:border-blue-500 dark:border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="mt-10 max-w-6xl mx-auto px-4">
+    <div className={containerClass}>
       {/* Encabezado */}
-      <header className="text-center sm:text-left mb-10">
-        <h1 className="text-4xl font-extrabold text-white mb-3">
-          Mis Citas Programadas
-        </h1>
-        <p className="text-lg text-white">
+      <header className={headerClass}>
+        <h1 className={titleClass}>Mis Citas Programadas</h1>
+        <p className={subtitleClass}>
           Revisa, gestiona o cancela tus próximas citas
         </p>
       </header>
 
-      {/* Lista de citas */}
+      {/* Lista */}
       {visibleAppointments.length > 0 ? (
         <ul className="space-y-4">
           {visibleAppointments.map((appt) => {
             const apptDate = new Date(appt.date);
             const isUpcoming = apptDate > new Date();
-            const statusColor = {
-              pending: "bg-yellow-500/20 text-yellow-400",
-              confirmed: "bg-green-500/20 text-green-400",
-              cancelled: "bg-red-500/20 text-red-400",
-              completed: "bg-blue-500/20 text-blue-400",
-            }[appt.status];
+            const badgeClass =
+              statusStyles[appt.status] ?? statusStyles.pending;
 
             return (
-              <li
-                key={appt._id}
-                className="p-5 bg-gradient-to-r from-blue-900/50 to-indigo-900/50 rounded-xl border border-blue-700/50"
-              >
+              <li key={appt._id} className={cardClass}>
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h2 className="text-xl font-bold text-white">
+                      <h2 className={dateClass}>
                         {apptDate.toLocaleDateString("es-ES", {
                           weekday: "long",
                           day: "numeric",
@@ -100,30 +159,26 @@ export default function MyAppointments() {
                           minute: "2-digit",
                         })}
                       </h2>
-                      <span
-                        className={`px-2 py-1 text-xs font-semibold rounded-full ${statusColor}`}
-                      >
+                      <span className={badgeClass}>
                         {appt.status === "pending" && "Pendiente"}
                         {appt.status === "confirmed" && "Confirmada"}
-                        {appt.status === "cancelled" && "Cancelada, espera 30 min."}
+                        {appt.status === "cancelled" &&
+                          "Cancelada, espera 30 min."}
                         {appt.status === "completed" && "Completada"}
                       </span>
                     </div>
 
                     <ul className="space-y-2">
                       {appt.services.map((service) => (
-                        <li
-                          key={service._id}
-                          className="flex justify-between items-center p-2 bg-blue-800/30 rounded-lg"
-                        >
-                          <span className="font-medium text-white">
+                        <li key={service._id} className={serviceItemClass}>
+                          <span className={serviceTextClass}>
                             {service.name}
                           </span>
                           <div className="flex gap-4">
-                            <span className="text-sm text-blue-300">
+                            <span className={durationPriceClass}>
                               {service.duration} min.
                             </span>
-                            <span className="font-bold text-blue-300">
+                            <span className="font-bold text-[var(--color-text)] dark:text-blue-300">
                               {service.price}€
                             </span>
                           </div>
@@ -131,20 +186,16 @@ export default function MyAppointments() {
                       ))}
                     </ul>
 
-                    <div className="mt-3 pt-3 border-t border-blue-700/30 flex justify-between">
-                      <span className="text-sm text-blue-300">
-                        Duración total:
-                      </span>
-                      <span className="font-bold text-white">
+                    <div className={`${dividerClass} flex justify-between`}>
+                      <span className={totalLabelClass}>Duración total:</span>
+                      <span className={totalValueClass}>
                         {appt.services.reduce((sum, s) => sum + s.duration, 0)}{" "}
                         min.
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-blue-300">
-                        Precio total:
-                      </span>
-                      <span className="font-bold text-white">
+                      <span className={totalLabelClass}>Precio total:</span>
+                      <span className={totalValueClass}>
                         {appt.services.reduce((sum, s) => sum + s.price, 0)}€
                       </span>
                     </div>
@@ -154,8 +205,10 @@ export default function MyAppointments() {
                     ["pending", "confirmed"].includes(appt.status) && (
                       <div className="flex flex-col sm:flex-row gap-2 justify-end">
                         <button
-                          onClick={() => handleEditClick(appt._id)} // Pasamos solo el ID
-                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center gap-2"
+                          onClick={() => handleEditClick(appt._id)}
+                          className="px-4 py-2 rounded-lg transition flex items-center gap-2 text-white
+                                     bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)]
+                                     dark:bg-blue-600 dark:hover:bg-blue-700"
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -170,7 +223,9 @@ export default function MyAppointments() {
                         <button
                           onClick={() => handleCancel(appt._id)}
                           disabled={cancellingId === appt._id}
-                          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition flex items-center gap-2 disabled:opacity-50"
+                          className="px-4 py-2 rounded-lg transition flex items-center gap-2 text-white disabled:opacity-50
+                                     bg-[var(--color-danger)] hover:bg-[var(--color-danger-hover)]
+                                     dark:bg-red-600 dark:hover:bg-red-700"
                         >
                           {cancellingId === appt._id ? (
                             <>
@@ -187,12 +242,12 @@ export default function MyAppointments() {
                                   r="10"
                                   stroke="currentColor"
                                   strokeWidth="4"
-                                ></circle>
+                                />
                                 <path
                                   className="opacity-75"
                                   fill="currentColor"
                                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                ></path>
+                                />
                               </svg>
                               Cancelando...
                             </>
@@ -216,11 +271,12 @@ export default function MyAppointments() {
                         </button>
                       </div>
                     )}
-                  {/* Botón para reactivar citas canceladas */}
+
                   {appt.status === "cancelled" && (
                     <button
                       onClick={() => handleReactivate(appt._id)}
-                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition"
+                      className="px-4 py-2 rounded-lg transition text-white
+                                 bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
                     >
                       Reactivar
                     </button>
@@ -231,11 +287,18 @@ export default function MyAppointments() {
           })}
         </ul>
       ) : (
-        <section className="mt-8 p-6 bg-blue-900/30 rounded-xl border border-blue-700/50 text-center">
-          <div className="text-blue-300 mb-3" aria-hidden="true">
+        <section
+          className="mt-8 p-8 rounded-xl border text-center
+                     bg-[var(--color-secondary)] border-[var(--color-secondary-light)] text-[var(--color-text)]
+                     dark:bg-blue-900/30 dark:border-blue-700/50 dark:text-blue-200"
+        >
+          <div
+            className="text-[var(--color-primary)] dark:text-blue-300 mb-4"
+            aria-hidden="true"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-12 w-12 mx-auto"
+              className="h-16 w-16 mx-auto"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -248,15 +311,17 @@ export default function MyAppointments() {
               />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-white mb-2">
+          <h2 className="text-2xl font-bold text-[var(--color-text)] dark:text-white mb-3">
             No tienes citas programadas
           </h2>
-          <p className="text-blue-200">
+          <p className="text-[var(--color-muted)] dark:text-blue-200 mb-6">
             Cuando reserves una cita, aparecerá aquí para que puedas gestionarla
           </p>
           <Link
             to="/appointments/new"
-            className="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            className="inline-block px-4 py-2 rounded-lg transition font-medium text-white
+                       bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)]
+                       dark:bg-blue-600 dark:hover:bg-blue-700"
             aria-label="Reservar nueva cita"
           >
             Reservar nueva cita

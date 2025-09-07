@@ -1,7 +1,21 @@
 /* src/styles/theme.css
    Archivo centralizado para clases personalizadas y temas */
-
+/* === Light (por defecto) === */
 :root {
+  --color-primary: #3b82f6;
+  --color-primary-hover: #2563eb;
+  --color-secondary: #f8fafc;
+  --color-secondary-light: #e2e8f0;
+  --color-bg: #f1f5f9;
+  --color-text: #1e293b;
+  --color-muted: #64748b;
+  --color-danger: #ef4444;
+  --color-danger-hover: #dc2626;
+  --color-warning: #f59e0b;
+}
+
+/* === Dark === */
+.dark {
   --color-primary: #3b82f6;
   --color-primary-hover: #2563eb;
   --color-secondary: #1e293b;
@@ -14,7 +28,131 @@
   --color-warning: #facc15;
 }
 
+/* ==== Utilidades basadas en variables ==== */
+
+/* Superficie general de la app (usa tus tokens) */
+.app-surface {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* Botones (los tuyos siguen igual) */
 .btn {
+  @apply px-4 py-2 rounded-lg font-semibold uppercase text-sm transition;
+}
+.btn-primary {
+  @apply text-white;
+  background: var(--color-primary);
+}
+.btn-primary:hover {
+  background: var(--color-primary-hover);
+}
+.btn-danger {
+  @apply text-white;
+  background: var(--color-danger);
+}
+.btn-danger:hover {
+  background: var(--color-danger-hover);
+}
+.btn-muted {
+  @apply text-white;
+  background: var(--color-secondary-light);
+}
+.btn-muted:hover {
+  background: var(--color-secondary);
+}
+.btn-warning {
+  @apply text-white hover:bg-yellow-600;
+  background: var(--color-warning);
+}
+
+/* Nav (igual que tenías) */
+.nav-link {
+  @apply flex-1 text-center p-3 uppercase font-extrabold transition;
+}
+.nav-link-active {
+  @apply text-white;
+  background: var(--color-primary);
+}
+.nav-link-inactive {
+  @apply bg-white hover:text-white;
+  color: var(--color-primary);
+}
+.dark .nav-link-inactive {
+  background: color-mix(
+    in oklab,
+    var(--color-bg) 60%,
+    #ffffff 5%
+  ); /* leve contraste en dark */
+}
+
+/* Cards: conserva tu card blanca y la oscura; añade una “neutra” por si quieres unificar */
+.card {
+  @apply rounded-lg shadow p-4;
+  background: #ffffff;
+}
+.card-dark {
+  @apply rounded-lg shadow p-4 text-white;
+  background: var(--color-secondary);
+}
+/* Opcional: una card que sigue el tema automáticamente */
+.card-surface {
+  @apply rounded-lg shadow p-4 border;
+  background: color-mix(in oklab, var(--color-bg) 85%, #ffffff 15%);
+  border-color: color-mix(in oklab, var(--color-bg) 70%, #000 10%);
+}
+
+/* Resto de utilidades tuyas (sin tocar): */
+.card-hover {
+  @apply transition-all duration-300 cursor-pointer rounded-xl border p-5;
+}
+.card-selected {
+  @apply bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg border-blue-500;
+}
+.card-unselected {
+  @apply bg-white/5 hover:bg-white/10 shadow-md hover:shadow-xl border-gray-700;
+}
+.card-disabled {
+  @apply opacity-50 cursor-not-allowed hover:bg-white/5;
+}
+.card-check {
+  @apply absolute top-0.5 right-0.5 bg-white text-blue-600 rounded-full p-1;
+}
+.section-title {
+  @apply text-4xl font-extrabold mb-3;
+  color: var(--color-text);
+}
+.section-subtitle {
+  @apply text-lg;
+  color: var(--color-text);
+}
+.section-container {
+  @apply mt-10 max-w-6xl mx-auto;
+}
+.alert-error {
+  @apply p-4 border rounded-lg flex items-center justify-between animate-pulse;
+  background: color-mix(in oklab, var(--color-danger) 20%, var(--color-bg) 80%);
+  border-color: var(--color-danger);
+  color: #fee2e2;
+}
+.alert-warning {
+  @apply px-4 py-3 rounded-lg mt-5 flex items-center border;
+  background: color-mix(
+    in oklab,
+    var(--color-warning) 18%,
+    var(--color-bg) 82%
+  );
+  border-color: color-mix(in oklab, var(--color-warning) 40%, #000 10%);
+  color: #fef3c7;
+}
+.alert-error-retry {
+  @apply px-4 py-3 rounded-lg relative mt-5 flex flex-col md:flex-row items-center gap-4 border;
+  background: color-mix(in oklab, var(--color-danger) 20%, var(--color-bg) 80%);
+  border-color: var(--color-danger);
+  color: #fee2e2;
+}
+
+/* .btn {
   @apply px-4 py-2 rounded-lg font-semibold uppercase text-sm transition;
 }
 
@@ -96,4 +234,4 @@
 
 .alert-error-retry {
   @apply bg-red-900/50 border border-red-600 text-red-100 px-4 py-3 rounded-lg relative mt-5 flex flex-col md:flex-row items-center gap-4;
-}
+} */

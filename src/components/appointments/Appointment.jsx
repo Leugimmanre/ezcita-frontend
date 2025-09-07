@@ -1,4 +1,3 @@
-// src/components/servicesComponents/Appointment.jsx
 import { MAX_SERVICES_SELECTION } from "@/data/index";
 import { useAppointment } from "@/hooks/useAppointment";
 import { useState, useEffect } from "react";
@@ -18,8 +17,8 @@ registerLocale("es", es);
 export default function Appointment({
   onBack = () => {},
   onConfirm = () => {},
-  isEditing = false, // Modo edición
-  appointmentToEdit = null, // Cita existente para editar
+  isEditing = false,
+  appointmentToEdit = null,
   startHour = 9,
   endHour = 18,
   interval = 30,
@@ -40,27 +39,21 @@ export default function Appointment({
   });
   const { staffCount } = useAppointmentContext();
 
-  // Traemos todos los servicios desde el backend
+  // Traer servicios
   const { data: allServices = [] } = useQuery({
     queryKey: ["services"],
     queryFn: getServices,
   });
 
-  // Habilitar guardar solo si hay hora y al menos 1 servicio
   const canConfirm = Boolean(selectedTime) && selectedServices.length > 0;
   const noServices = selectedServices.length === 0;
 
-  // Inicializar con datos de la cita a editar
+  // Inicializar edición
   useEffect(() => {
     if (isEditing && appointmentToEdit) {
-      // Prellenar servicios
       setSelectedServices(appointmentToEdit.services);
-
-      // Prellenar fecha y hora
       const appointmentDate = new Date(appointmentToEdit.date);
       setSelectedDate(appointmentDate);
-
-      // Formatear hora
       const timeString = appointmentDate.toLocaleTimeString("es-ES", {
         hour: "2-digit",
         minute: "2-digit",
@@ -69,7 +62,7 @@ export default function Appointment({
     }
   }, [isEditing, appointmentToEdit, setSelectedServices]);
 
-  // Calcular totales
+  // Totales
   const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
   const totalDuration = selectedServices.reduce(
     (sum, s) => sum + s.duration,
@@ -77,89 +70,162 @@ export default function Appointment({
   );
   const maxServices = MAX_SERVICES_SELECTION;
 
-  // Manejo de servicios
+  // Handlers
   const handleRemoveService = (serviceId) => {
-    // Permite dejar la cita sin servicios en edición
     setSelectedServices((prev) => prev.filter((s) => s._id !== serviceId));
   };
-
   const handleAddService = (e) => {
     const serviceId = e.target.value;
     if (!serviceId) return;
-
-    // Comprobamos límite
     if (selectedServices.length >= maxServices) {
       toast.warning(`Solo puedes seleccionar hasta ${maxServices} servicios.`);
       e.target.value = "";
       return;
     }
-
     const service = allServices.find((s) => s._id === serviceId);
     if (service && !selectedServices.some((s) => s._id === service._id)) {
       setSelectedServices((prev) => [...prev, service]);
     }
     e.target.value = "";
   };
-
-  const handleClearSelection = () => {
-    setSelectedServices([]);
-  };
-
-  // Confirmar (edición o creación) enviando todo lo necesario
+  const handleClearSelection = () => setSelectedServices([]);
   const handleConfirm = () => {
     if (!canConfirm) return;
     const [hour, minute] = selectedTime.split(":").map(Number);
     const finalDate = new Date(selectedDate);
     finalDate.setHours(hour, minute, 0, 0);
-
     if (isEditing) {
-      // Modo EDICIÓN: el padre espera objeto
       onConfirm({
         date: finalDate,
         services: selectedServices.map((s) => s._id),
         duration: totalDuration,
       });
     } else {
-      // Modo CREACIÓN: retrocompatible con handlers antiguos (Date)
       onConfirm(finalDate);
     }
   };
-
   const handleDateChange = (date) => {
     setSelectedDate(date);
     setSelectedTime(null);
   };
 
-  // Clases reutilizables
-  const serviceItemClasses =
-    "flex justify-between items-center p-3 bg-blue-800/30 rounded-lg border border-blue-700/50";
-  const priceTextClasses = "text-lg font-bold text-blue-300";
-  const durationTextClasses = "text-sm text-blue-200";
-  const datePickerClasses =
-    "w-full p-2 border rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent";
+  // ====== CLASES ======
 
-  // Títulos según modo
-  const headerTitle = isEditing ? "Editar Cita" : "Detalle de Cita y Resumen";
-  const headerDescription = isEditing
-    ? "Modifica los detalles de tu cita"
-    : "Verifica la información y confirma tu cita";
-  const confirmButtonText = isEditing ? "Guardar Cambios" : "Confirmar cita";
+  // Tarjeta principal (CLARO por tokens + OSCURO original)
+  const mainSection =
+    "mt-8 p-5 rounded-xl border " +
+    // claro
+    "bg-[var(--color-secondary)] border-[var(--color-secondary-light)] " +
+    // oscuro
+    "dark:bg-gradient-to-r dark:from-blue-900/50 dark:to-indigo-900/50 dark:border-blue-700/50";
+
+  // Encabezado de vista
+  const headerTitle =
+    "text-4xl font-extrabold text-[var(--color-text)] dark:text-white mb-3";
+  const headerSubtitle = "text-lg text-[var(--color-text)]/80 dark:text-white";
+
+  // Botón “volver”
+  const backBtn =
+    "flex items-center text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] " +
+    "dark:text-blue-400 dark:hover:text-blue-300";
+
+  // Fila de servicio seleccionado
+  const serviceItemClasses =
+    // claro
+    "flex justify-between items-center p-3 rounded-lg border " +
+    "bg-[color-mix(in_oklab,var(--color-primary)_8%,var(--color-secondary)_92%)] " +
+    "border-[color-mix(in_oklab,var(--color-primary)_35%,var(--color-secondary-light)_65%)] " +
+    // oscuro
+    "dark:bg-blue-800/30 dark:border-blue-700/50";
+
+  const priceTextClasses =
+    "text-lg font-bold text-[var(--color-primary)] dark:text-blue-300";
+  const durationTextClasses =
+    "text-sm text-[var(--color-muted)] dark:text-blue-200";
+
+  // DatePicker input
+  const datePickerClasses =
+    "w-full p-2 rounded-lg border " +
+    "bg-[var(--color-bg)] text-[var(--color-text)] border-[var(--color-secondary-light)] " +
+    "focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent " +
+    "dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:focus:ring-blue-500";
+
+  // Caja de fecha/hora (contenedor)
+  const scheduleBox =
+    // claro
+    "rounded-lg border p-4 " +
+    "bg-[var(--color-secondary)] border-[var(--color-secondary-light)] " +
+    // oscuro
+    "dark:bg-gray-800/50 dark:border-gray-700";
+
+  // Botones de hora
+  const slotBase = "text-center text-sm font-bold p-2 rounded-lg transition";
+  const slotSelected =
+    // claro
+    "bg-[var(--color-primary)] text-white ring-2 ring-[color-mix(in_oklab,var(--color-primary)_55%,white_45%)] " +
+    // oscuro
+    "dark:bg-blue-500 dark:text-white dark:ring-2 dark:ring-blue-300";
+  const slotIdle =
+    // claro
+    "bg-[var(--color-secondary)] text-[var(--color-primary)] hover:bg-[color-mix(in_oklab,var(--color-primary)_8%,var(--color-secondary)_92%)] " +
+    // oscuro (aprox equivalente a tu blanco/azul)
+    "dark:bg-gray-800 dark:text-blue-300 dark:hover:bg-gray-700";
+  const slotDisabled = "opacity-30 cursor-not-allowed";
+
+  // Totales
+  const totalsRow =
+    "mt-5 pt-4 flex justify-between items-center border-t " +
+    "border-[var(--color-secondary-light)] dark:border-blue-700/50";
+  const totalsLabel = "text-sm text-[var(--color-muted)] dark:text-blue-300";
+  const totalsValueLeft =
+    "text-lg font-bold text-[var(--color-text)] dark:text-white";
+  const totalsValueRight =
+    "text-2xl font-bold text-[var(--color-text)] dark:text-white";
+
+  // Avisos/info
+  const infoBoxEmptyEdit =
+    "p-4 rounded-lg " +
+    "bg-[color-mix(in_oklab,var(--color-primary)_8%,var(--color-secondary)_92%)] " +
+    "border border-[color-mix(in_oklab,var(--color-primary)_35%,var(--color-secondary-light)_65%)] " +
+    "text-[var(--color-text)] " +
+    "dark:bg-blue-900/30 dark:border-blue-700/50 dark:text-blue-200";
+
+  const infoSelected =
+    "p-3 rounded-lg " +
+    "bg-[color-mix(in_oklab,var(--color-primary)_8%,var(--color-secondary)_92%)] text-[var(--color-text)] " +
+    "dark:bg-blue-900/30 dark:text-white";
+
+  // Botón “Limpiar”
+  const clearBtn =
+    "text-sm flex items-center px-3 py-1.5 rounded transition " +
+    "bg-[var(--color-secondary-light)] hover:bg-[var(--color-secondary)] text-[var(--color-text)] " +
+    "dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white";
+
+  // Botón final
+  const confirmBtnEnabled =
+    "bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white";
+  const confirmBtnDisabled =
+    "bg-gray-500 opacity-50 cursor-not-allowed text-white";
 
   return (
     <div className="mt-10 max-w-6xl mx-auto">
       {/* Encabezado */}
       <header className="text-center sm:text-left mb-10">
-        <h1 className="text-4xl font-extrabold text-white mb-3">
-          {headerTitle}
+        <h1 className={headerTitle}>
+          {isEditing ? "Editar Cita" : "Detalle de Cita y Resumen"}
         </h1>
-        <p className="text-lg text-white">{headerDescription}</p>
+        <p className={headerSubtitle}>
+          {isEditing
+            ? "Modifica los detalles de tu cita"
+            : "Verifica la información y confirma tu cita"}
+        </p>
       </header>
 
-      {/* Botón para volver */}
+      {/* Volver */}
       <nav className="mb-6">
         <button
           onClick={onBack}
-          className="flex items-center text-blue-400 hover:text-blue-300"
+          className={backBtn}
           aria-label="Volver a selección de servicios"
         >
           <svg
@@ -167,7 +233,6 @@ export default function Appointment({
             className="h-5 w-5 mr-1"
             viewBox="0 0 20 20"
             fill="currentColor"
-            aria-hidden="true"
           >
             <path
               fillRule="evenodd"
@@ -179,27 +244,31 @@ export default function Appointment({
         </button>
       </nav>
 
-      {/* --- CONTENIDO PRINCIPAL --- */}
-      {/* En edición: mantenemos la misma tarjeta aunque no haya servicios.
-          En creación: si no hay servicios, mostramos el vacío clásico. */}
+      {/* CONTENIDO PRINCIPAL */}
       {isEditing || selectedServices.length > 0 ? (
-        <section className="mt-8 p-5 bg-gradient-to-r from-blue-900/50 to-indigo-900/50 rounded-xl border border-blue-700/50">
-          {/* Encabezado de la sección + selector para añadir */}
+        <section className={mainSection}>
+          {/* Encabezado de sección */}
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-white">
+            <h2 className="text-xl font-bold text-[var(--color-text)] dark:text-white">
               Servicios seleccionados ({selectedServices.length}/{maxServices})
             </h2>
 
-            {/* En edición siempre mostramos el selector para añadir, incluso si no hay servicios */}
             {isEditing && (
               <div className="mb-5">
-                <label className="block text-white font-medium mb-2">
+                <label className="block text-[var(--color-text)] dark:text-white font-medium mb-2">
                   Añadir otro servicio:
                 </label>
                 <div className="relative">
                   <select
                     onChange={handleAddService}
-                    className="w-full pl-10 pr-3 py-3 rounded-lg bg-gray-700/80 text-white border border-blue-600/50 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none transition-all hover:bg-gray-700"
+                    className={
+                      "w-full pl-3 pr-3 py-3 rounded-lg border appearance-none transition-all " +
+                      // claro
+                      "bg-[var(--color-bg)] text-[var(--color-text)] border-[var(--color-secondary-light)] " +
+                      "focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent " +
+                      // oscuro
+                      "dark:bg-gray-700/80 dark:text-white dark:border-blue-600/50 dark:focus:ring-blue-500 dark:hover:bg-gray-700"
+                    }
                   >
                     <option value="">-- Selecciona un servicio --</option>
                     {allServices.map((service) => (
@@ -208,30 +277,26 @@ export default function Appointment({
                       </option>
                     ))}
                   </select>
-                  {/* Iconos decorativos (dejados como comentario para conservar estructura) */}
-                  {/* … (iconos a izquierda/derecha como ya tienes) … */}
                 </div>
-                <p className="mt-1 text-sm text-blue-300">
+                <p className="mt-1 text-sm text-[var(--color-muted)] dark:text-blue-300">
                   Puedes añadir hasta {maxServices - selectedServices.length}{" "}
                   servicios más
                 </p>
               </div>
             )}
 
-            {/* En creación, mantenemos el botón de limpiar como estaba */}
             {!isEditing && (
               <button
                 onClick={handleClearSelection}
-                className="text-sm flex items-center bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded transition cursor-pointer"
+                className={clearBtn}
                 aria-label="Limpiar selección"
               >
-                {/* …icono… */}
                 Limpiar
               </button>
             )}
           </div>
 
-          {/* Lista de servicios o aviso en edición si está vacío */}
+          {/* Lista de servicios */}
           {selectedServices.length > 0 ? (
             <div className="space-y-3" role="list">
               {selectedServices.map((service) => (
@@ -241,7 +306,9 @@ export default function Appointment({
                   role="listitem"
                 >
                   <div>
-                    <p className="font-medium text-white">{service.name}</p>
+                    <p className="font-medium text-[var(--color-text)] dark:text-white">
+                      {service.name}
+                    </p>
                     <p className={durationTextClasses}>
                       {service.duration} min.
                     </p>
@@ -250,7 +317,7 @@ export default function Appointment({
                     <p className={priceTextClasses}>{service.price}€</p>
                     <button
                       onClick={() => handleRemoveService(service._id)}
-                      className="text-red-400 hover:text-red-300 cursor-pointer"
+                      className="text-[var(--color-danger)] hover:text-[var(--color-danger-hover)] dark:text-red-400 dark:hover:text-red-300"
                       aria-label={`Eliminar ${service.name}`}
                     >
                       <svg
@@ -258,7 +325,6 @@ export default function Appointment({
                         className="h-5 w-5"
                         viewBox="0 0 20 20"
                         fill="currentColor"
-                        aria-hidden="true"
                       >
                         <path
                           fillRule="evenodd"
@@ -272,37 +338,33 @@ export default function Appointment({
               ))}
             </div>
           ) : (
-            // En edición, mantenernos en la tarjeta con instrucción clara
             isEditing && (
-              <div className="p-4 rounded-lg bg-blue-900/30 border border-blue-700/50">
-                <p className="text-blue-200">
-                  Esta cita no tiene servicios. Usa el selector de arriba para
-                  añadir al menos uno.
-                </p>
+              <div className={infoBoxEmptyEdit}>
+                Esta cita no tiene servicios. Usa el selector de arriba para
+                añadir al menos uno.
               </div>
             )
           )}
 
-          {/* Totales (se muestran incluso con 0 para mantener consistencia visual) */}
-          <div className="mt-5 pt-4 border-t border-blue-700/50 flex justify-between items-center">
+          {/* Totales */}
+          <div className={totalsRow}>
             <div>
-              <p className="text-sm text-blue-300">Duración total:</p>
-              <p className="text-lg font-bold text-white">
-                {totalDuration} min.
-              </p>
+              <p className={totalsLabel}>Duración total:</p>
+              <p className={totalsValueLeft}>{totalDuration} min.</p>
             </div>
             <div className="text-right">
-              <p className="text-sm text-blue-300">Precio total:</p>
-              <p className="text-2xl font-bold text-white">{totalPrice}€</p>
+              <p className={totalsLabel}>Precio total:</p>
+              <p className={totalsValueRight}>{totalPrice}€</p>
             </div>
           </div>
 
           {/* Selección de fecha y hora */}
           <div className="mt-6 space-y-4">
-            <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
-              <h3 className="text-white font-medium mb-3">
+            <div className={scheduleBox}>
+              <h3 className="text-[var(--color-text)] dark:text-white font-medium mb-3">
                 Selecciona fecha y hora:
               </h3>
+
               <DatePicker
                 selected={selectedDate}
                 onChange={handleDateChange}
@@ -332,38 +394,26 @@ export default function Appointment({
 
                     const now = new Date();
 
-                    // Calcular hora de fin de la cita seleccionada (en base a duración total)
                     const selectedEnd = new Date(dateWithTime);
                     selectedEnd.setMinutes(
                       selectedEnd.getMinutes() + totalDuration
                     );
 
-                    // Contar cuántas citas se solapan (ignorando la propia cita en edición)
                     const overlappingCount = appointments?.filter((appt) => {
                       if (!["pending", "confirmed"].includes(appt.status))
                         return false;
                       if (appt._id === appointmentToEdit?._id) return false;
-
                       const apptStart = new Date(appt.date);
                       const apptEnd = new Date(apptStart);
                       apptEnd.setMinutes(apptEnd.getMinutes() + appt.duration);
-
                       return apptStart < selectedEnd && apptEnd > dateWithTime;
                     }).length;
 
-                    // Está bloqueado si el número de solapamientos >= trabajadores
                     const isBooked = overlappingCount >= staffCount;
-
                     const isWorkingDay = workingDays.includes(
                       selectedDate.getDay()
                     );
 
-                    // Deshabilitar si:
-                    // - No hay servicios (en edición mantenemos la vista pero bloqueamos horas)
-                    // - Hora pasada
-                    // - Bloqueos por solape
-                    // - Franja de comida
-                    // - Día no laborable
                     const disabled =
                       noServices ||
                       dateWithTime < now ||
@@ -376,20 +426,18 @@ export default function Appointment({
                           lunchEnd) ||
                       !isWorkingDay;
 
+                    const classes =
+                      slotBase +
+                      " " +
+                      (selectedTime === hour ? slotSelected : slotIdle) +
+                      (disabled ? " " + slotDisabled : "");
+
                     return (
                       <button
                         key={hour}
                         onClick={() => setSelectedTime(hour)}
                         disabled={disabled}
-                        className={`text-center text-sm font-bold p-2 rounded-lg transition ${
-                          selectedTime === hour
-                            ? "bg-blue-500 text-white ring-2 ring-blue-300"
-                            : "bg-white text-blue-800"
-                        } ${
-                          disabled
-                            ? "opacity-30 cursor-not-allowed"
-                            : "hover:bg-blue-100"
-                        }`}
+                        className={classes}
                       >
                         {hour}
                       </button>
@@ -398,19 +446,17 @@ export default function Appointment({
                 </div>
               )}
 
-              {/* Mensaje de ayuda si no hay servicios */}
               {noServices && (
-                <p className="mt-2 text-sm text-blue-300">
+                <p className="mt-2 text-sm text-[var(--color-muted)] dark:text-blue-300">
                   Añade al menos un servicio para habilitar la selección de
                   hora.
                 </p>
               )}
             </div>
 
-            {/* Información de fecha y hora seleccionada */}
             {selectedTime && (
-              <div className="bg-blue-900/30 p-3 rounded-lg">
-                <p className="text-white">
+              <div className={infoSelected}>
+                <p>
                   <span className="font-semibold">Fecha seleccionada:</span>{" "}
                   {selectedDate.toLocaleDateString("es-ES", {
                     weekday: "long",
@@ -423,25 +469,35 @@ export default function Appointment({
               </div>
             )}
 
-            {/* Botón final (deshabilitado si no hay servicios u hora) */}
+            {/* Botón final */}
             <button
-              className={`w-full py-3 text-white font-bold rounded-lg transition-all shadow-lg cursor-pointer uppercase ${
-                canConfirm
-                  ? "bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800"
-                  : "bg-gray-500 opacity-50 cursor-not-allowed"
-              }`}
+              className={
+                "w-full py-3 font-bold rounded-lg transition-all shadow-lg cursor-pointer uppercase " +
+                (canConfirm ? confirmBtnEnabled : confirmBtnDisabled)
+              }
               onClick={handleConfirm}
-              aria-label={confirmButtonText}
+              aria-label={isEditing ? "Guardar Cambios" : "Confirmar cita"}
               disabled={!canConfirm}
             >
-              {confirmButtonText}
+              {isEditing ? "Guardar Cambios" : "Confirmar cita"}
             </button>
           </div>
         </section>
       ) : (
-        // Estado vacío SOLO en creación (en edición no salimos de la tarjeta)
-        <section className="mt-8 p-6 bg-blue-900/30 rounded-xl border border-blue-700/50 text-center">
-          <div className="text-blue-300 mb-3" aria-hidden="true">
+        /* Estado vacío (CREACIÓN) */
+        <section
+          className={
+            "mt-8 p-6 rounded-xl border text-center " +
+            // claro
+            "bg-[var(--color-secondary)] border-[var(--color-secondary-light)] text-[var(--color-text)] " +
+            // oscuro
+            "dark:bg-blue-900/30 dark:border-blue-700/50 dark:text-blue-200"
+          }
+        >
+          <div
+            className="mb-3 text-[var(--color-primary)] dark:text-blue-300"
+            aria-hidden="true"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-12 w-12 mx-auto"
@@ -457,16 +513,20 @@ export default function Appointment({
               />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-white mb-2">
+          <h2 className="text-xl font-bold text-[var(--color-text)] dark:text-white mb-2">
             No has seleccionado servicios aún
           </h2>
-          <p className="text-blue-200">
+          <p className="text-[var(--color-muted)] dark:text-blue-200">
             Por favor, selecciona hasta {maxServices} servicios para continuar
             con tu reserva
           </p>
           <button
             onClick={onBack}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            className={
+              "mt-4 px-4 py-2 rounded-lg transition font-medium " +
+              "bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] " +
+              "dark:bg-blue-600 dark:hover:bg-blue-700"
+            }
             aria-label="Seleccionar servicios"
           >
             Seleccionar servicios

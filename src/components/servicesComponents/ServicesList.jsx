@@ -97,25 +97,53 @@ export default function ServicesList() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold mb-2">
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="mb-8 text-center">
+        <h2 className="text-2xl lg:text-4xl font-extrabold text-current transition-colors">
           Selecciona tus servicios
         </h2>
-        <p className="text-gray-200">
+        <p className="text-lg text-gray-600">
           Puedes seleccionar hasta {maxServices} servicios por cita
         </p>
       </div>
 
-      <div className="flex items-center justify-between mb-4 bg-blue-50 p-2 rounded-lg">
-        <div className="font-medium text-blue-800 mx-3">
-          Seleccionados: {selectedServices.length}/{maxServices}
+      {/* Contador de servicios seleccionados */}
+      <div className="flex items-center justify-between mb-6 p-5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl shadow-md border border-blue-100">
+        <div className="flex items-center">
+          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 mr-3 border-2 border-blue-200">
+            <span className="text-blue-700 font-bold text-lg">
+              {selectedServices.length}
+            </span>
+          </div>
+          <div>
+            <span className="font-semibold text-blue-800 block">
+              Servicios seleccionados
+            </span>
+            <span className="text-blue-600 text-sm">
+              {selectedServices.length} de {maxServices} servicios
+            </span>
+          </div>
         </div>
+
         {selectedServices.length > 0 && (
           <button
             onClick={clearSelection}
-            className="text-blue-600 hover:text-blue-800 text-sm font-medium cursor-pointer mx-3"
+            className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center transition-colors bg-blue-100 hover:bg-blue-200 px-4 py-2 rounded-lg"
           >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 mr-2"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
+            </svg>
             Limpiar selección
           </button>
         )}
@@ -123,33 +151,82 @@ export default function ServicesList() {
 
       {/* Mensaje de error */}
       {selectionError && (
-        <div className="mb-4">
-          <Alert type="error" message={selectionError} />
+        <div className="mb-6 animate-fadeIn">
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg flex items-start shadow-sm">
+            <div className="flex-shrink-0">
+              <svg
+                className="h-5 w-5 text-red-500 mt-0.5"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-red-800 font-medium">{selectionError}</p>
+            </div>
+          </div>
         </div>
       )}
 
       {/* Estados de carga/error */}
       {isLoading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {[1, 2, 3, 4].map((i) => (
-            <LoadingSkeleton key={i} height={120} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div
+              key={i}
+              className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200 animate-pulse"
+            >
+              <div className="h-48 bg-gray-200"></div>
+              <div className="p-5">
+                <div className="h-6 bg-gray-200 rounded mb-4"></div>
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-6"></div>
+                <div className="flex justify-between items-center">
+                  <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+                  <div className="h-10 bg-gray-200 rounded w-1/3"></div>
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       )}
 
       {isError && (
-        <Alert
-          type="error"
-          title="Error de conexión"
-          message="No pudimos cargar los servicios. Por favor intenta nuevamente."
-          actions={
+        <div className="mb-8">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center shadow-sm">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-16 w-16 mx-auto text-red-400 mb-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <h3 className="text-lg font-medium text-red-800 mb-2">
+              Error de conexión
+            </h3>
+            <p className="text-red-600 mb-6">
+              No pudimos cargar los servicios. Por favor intenta nuevamente.
+            </p>
             <Button
               variant="primary"
               onClick={refetch}
+              className="px-5 py-2.5 bg-red-600 hover:bg-red-700"
               icon={
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
+                  className="h-5 w-5 mr-2"
                   viewBox="0 0 20 20"
                   fill="currentColor"
                 >
@@ -163,21 +240,39 @@ export default function ServicesList() {
             >
               Reintentar
             </Button>
-          }
-        />
+          </div>
+        </div>
       )}
 
       {/* Sin servicios disponibles */}
       {!isLoading && !isError && services.length === 0 && (
-        <Alert
-          type="warning"
-          message="No hay servicios disponibles en este momento."
-        />
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 text-center mb-8 shadow-sm">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-16 w-16 mx-auto text-yellow-400 mb-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+          <h3 className="text-lg font-medium text-yellow-800 mb-2">
+            No hay servicios disponibles
+          </h3>
+          <p className="text-yellow-600">
+            No hay servicios disponibles en este momento.
+          </p>
+        </div>
       )}
 
       {/* Lista de servicios */}
       {services.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {services.map((service) => (
             <ServiceItem
               key={service._id}

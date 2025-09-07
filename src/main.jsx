@@ -10,6 +10,7 @@ import { AppointmentProvider } from "@/contexts/AppointmentProvider";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { getTenantId, setTenantId } from "./utils/tenantStorage";
+import { ThemeProvider } from "./contexts/ThemeContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,22 +30,24 @@ if (!getTenantId()) setTenantId(envTenantId);
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <AppointmentProvider>
-        <TenantProvider>
-          <ToastContainer
-            position="top-right"
-            autoClose={3000}
-            hideProgressBar={false}
-            newestOnTop
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-          />
-          <RouterProvider router={router} />
-        </TenantProvider>
-      </AppointmentProvider>
+      <ThemeProvider>
+        <AppointmentProvider>
+          <TenantProvider>
+            <ToastContainer
+              position="top-right"
+              autoClose={3000}
+              hideProgressBar={false}
+              newestOnTop
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+            />
+            <RouterProvider router={router} />
+          </TenantProvider>
+        </AppointmentProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   </StrictMode>
 );
