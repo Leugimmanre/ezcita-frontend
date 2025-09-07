@@ -110,7 +110,6 @@ export default function Appointment({
   };
 
   // ====== CLASES ======
-
   // Tarjeta principal (CLARO por tokens + OSCURO original)
   const mainSection =
     "mt-8 p-5 rounded-xl border " +

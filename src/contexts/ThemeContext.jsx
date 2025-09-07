@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+// src/contexts/ThemeContext.jsx
+import { createContext, useEffect, useMemo, useState } from "react";
 
 const ThemeContext = createContext({
   isDarkMode: false,
@@ -8,7 +9,6 @@ const ThemeContext = createContext({
 export function ThemeProvider({ children }) {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  // 📌 Aplica tema al montar leyendo localStorage o preferencia del SO
   useEffect(() => {
     try {
       const saved = localStorage.getItem("theme");
@@ -17,22 +17,20 @@ export function ThemeProvider({ children }) {
       ).matches;
       const dark = saved ? saved === "dark" : !!prefersDark;
       setIsDarkMode(dark);
-      document.documentElement.classList.toggle("dark", dark); // <- clave
+      document.documentElement.classList.toggle("dark", dark);
     } catch {
-      // fallback seguro
       document.documentElement.classList.remove("dark");
     }
   }, []);
 
-  // Cambia tema + persiste + aplica clase en <html>
   const toggleTheme = () => {
     setIsDarkMode((prev) => {
       const next = !prev;
-      document.documentElement.classList.toggle("dark", next); // <- clave
+      document.documentElement.classList.toggle("dark", next);
       try {
         localStorage.setItem("theme", next ? "dark" : "light");
       } catch {
-        // Intentionally left blank: ignore localStorage errors
+        // Ignorar errores de localStorage
       }
       return next;
     });
@@ -45,6 +43,4 @@ export function ThemeProvider({ children }) {
   );
 }
 
-export function useTheme() {
-  return useContext(ThemeContext);
-}
+export default ThemeContext;
