@@ -93,28 +93,20 @@ export default function MyAppointments() {
   const statusStyles = {
     pending:
       "border px-2 py-1 text-xs font-semibold rounded-full " +
-      "bg-[color-mix(in_oklab,#f59e0b_18%,var(--color-secondary)_82%)] " + // amber
-      "text-[#92400e] " +
-      "border-[color-mix(in_oklab,#f59e0b_35%,var(--color-secondary-light)_65%)] " +
-      "dark:bg-yellow-500/20 dark:text-yellow-400 dark:border-transparent",
+      "bg-amber-100 text-amber-800 border-amber-200 " +
+      "dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700/50",
     confirmed:
       "border px-2 py-1 text-xs font-semibold rounded-full " +
-      "bg-[color-mix(in_oklab,#10b981_18%,var(--color-secondary)_82%)] " + // emerald
-      "text-[#065f46] " +
-      "border-[color-mix(in_oklab,#10b981_35%,var(--color-secondary-light)_65%)] " +
-      "dark:bg-green-500/20 dark:text-green-400 dark:border-transparent",
+      "bg-green-100 text-green-800 border-green-200 " +
+      "dark:bg-green-900/30 dark:text-green-300 dark:border-green-700/50",
     cancelled:
       "border px-2 py-1 text-xs font-semibold rounded-full " +
-      "bg-[color-mix(in_oklab,#ef4444_18%,var(--color-secondary)_82%)] " + // red
-      "text-[#991b1b] " +
-      "border-[color-mix(in_oklab,#ef4444_35%,var(--color-secondary-light)_65%)] " +
-      "dark:bg-red-500/20 dark:text-red-400 dark:border-transparent",
+      "bg-red-100 text-red-800 border-red-200 " +
+      "dark:bg-red-900/30 dark:text-red-300 dark:border-red-700/50",
     completed:
       "border px-2 py-1 text-xs font-semibold rounded-full " +
-      "bg-[color-mix(in_oklab,#3b82f6_18%,var(--color-secondary)_82%)] " + // blue
-      "text-[#1e40af] " +
-      "border-[color-mix(in_oklab,#3b82f6_35%,var(--color-secondary-light)_65%)] " +
-      "dark:bg-blue-500/20 dark:text-blue-400 dark:border-transparent",
+      "bg-blue-100 text-blue-800 border-blue-200 " +
+      "dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700/50",
   };
 
   if (isLoading) {
