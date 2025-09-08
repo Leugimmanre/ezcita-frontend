@@ -50,3 +50,19 @@ export function toAbsoluteUrl(path) {
   return getApiOrigin() + path; // p.ej. http://localhost:4000 + /static/...
 }
 
+// Sube/reemplaza hero
+export async function uploadBrandHero(file) {
+  const form = new FormData();
+  form.append("hero", file);
+  const { data } = await api.post("/brand/hero", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  // Devuelve { url, publicId, provider, mimetype, size }
+  return data?.data ?? null;
+}
+
+// Elimina hero
+export async function deleteBrandHero() {
+  const { data } = await api.delete("/brand/hero");
+  return data;
+}
