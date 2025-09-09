@@ -51,7 +51,11 @@ export default function AppLayout() {
   };
 
   // URL de fondo desde el backend (absoluta)
-  const bgUrl = brand?.logo?.url ? toAbsoluteUrl(brand.logo.url) : null;
+  const bgUrl = brand?.hero?.url
+    ? toAbsoluteUrl(brand.hero.url)
+    : brand?.logo?.url
+    ? toAbsoluteUrl(brand.logo.url)
+    : null;
   // Nombre de marca
   const brandName = brand?.brandName || "Mi Negocio";
 
