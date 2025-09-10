@@ -7,6 +7,7 @@ import {
   toAbsoluteUrl,
 } from "@/services/brandApi";
 import { toast } from "react-toastify";
+import Modal from "@/components/ui/Modal"; // ⬅️ Importa tu modal
 
 // Lista corta de zonas horarias comunes (amplíala si quieres)
 const TIMEZONES = [
@@ -23,13 +24,16 @@ export default function BrandSettingsPage() {
   const [deletingLogo, setDeletingLogo] = useState(false);
   const [uploading, setUploading] = useState(false);
 
+  // ⬇️ Estado para controlar la apertura del modal de borrado
+  const [showDeleteLogoModal, setShowDeleteLogoModal] = useState(false);
+
   const [brand, setBrand] = useState({
     brandName: "",
     brandDomain: "",
     contactEmail: "",
     timezone: "Europe/Madrid",
     frontendUrl: "",
-    logo: null, // { url, filename, mimetype, size }
+    logo: null,
   });
 
   // Cargar datos
@@ -110,14 +114,19 @@ export default function BrandSettingsPage() {
     }
   };
 
-  // Eliminar logo
-  const onDeleteLogo = async () => {
-    if (!confirm("¿Eliminar el logo actual?")) return;
+  // ⬇️ Abre el modal (en lugar de confirm(...))
+  const requestDeleteLogo = () => {
+    setShowDeleteLogoModal(true);
+  };
+
+  // ⬇️ Confirma borrado y cierra el modal
+  const confirmDeleteLogo = async () => {
     try {
       setDeletingLogo(true);
       await deleteBrandLogo();
       setBrand((prev) => ({ ...prev, logo: null }));
       toast("Logo eliminado");
+      setShowDeleteLogoModal(false);
     } catch (err) {
       console.error(err);
       toast(err?.response?.data?.message || "No se pudo eliminar el logo");
@@ -238,11 +247,14 @@ export default function BrandSettingsPage() {
           >
             {saving ? (
               <span className="flex items-center">
+                {/* Spinner simple accesible */}
                 <svg
                   className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
+                  role="status"
+                  aria-label="Guardando"
                 >
                   <circle
                     className="opacity-25"
@@ -309,7 +321,7 @@ export default function BrandSettingsPage() {
 
               {hasLogo && (
                 <button
-                  onClick={onDeleteLogo}
+                  onClick={requestDeleteLogo} // ⬅️ Abre el modal
                   disabled={deletingLogo}
                   className="ml-3 bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-lg transition-colors font-medium disabled:opacity-70"
                 >
@@ -324,6 +336,38 @@ export default function BrandSettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* ⬇️ Modal de confirmación para borrar el logo */}
+      <Modal
+        isOpen={showDeleteLogoModal}
+        onClose={() => setShowDeleteLogoModal(false)}
+        title="Eliminar imagen del negocio"
+        size="md"
+        overlayOpacity={50}
+      >
+        {/* Contenido del modal */}
+        <p className="text-sm text-gray-700">
+          ¿Seguro que quieres eliminar la imagen actual del negocio? Esta acción no se puede deshacer.
+        </p>
+
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => setShowDeleteLogoModal(false)}
+            className="px-4 py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={confirmDeleteLogo}
+            disabled={deletingLogo}
+            className="px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-70"
+          >
+            {deletingLogo ? "Eliminando…" : "Eliminar imagen"}
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }
