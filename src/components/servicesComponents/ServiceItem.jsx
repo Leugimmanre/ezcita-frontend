@@ -17,7 +17,8 @@ export default function ServiceItem({
   formattedDuration,
 }) {
   const base = "p-5 rounded-xl transition-all cursor-pointer border";
-  const disabled = isDisabled && !isSelected ? "opacity-50 cursor-not-allowed" : "";
+  const disabled =
+    isDisabled && !isSelected ? "opacity-50 cursor-not-allowed" : "";
 
   // Seleccionado
   // - Claro: tinte suave del primario + borde primario con variables
@@ -44,7 +45,8 @@ export default function ServiceItem({
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
-        if (!isDisabled && (e.key === "Enter" || e.key === " ")) onSelect(service);
+        if (!isDisabled && (e.key === "Enter" || e.key === " "))
+          onSelect(service);
       }}
     >
       <div className="flex justify-between items-start">
@@ -58,9 +60,11 @@ export default function ServiceItem({
 
               {/* Imagen */}
               {service.images?.length > 0 && (
-                <div className="mb-3 rounded-lg overflow-hidden border flex justify-center items-center h-48
+                <div
+                  className="mb-3 rounded-lg overflow-hidden border flex justify-center items-center h-48
                                 bg-[var(--color-bg)] border-[var(--color-secondary-light)]
-                                dark:bg-gray-900 dark:border-gray-700">
+                                dark:bg-gray-900 dark:border-gray-700"
+                >
                   <img
                     src={service.images[0].url}
                     alt={service.images[0].alt || service.name}
@@ -76,7 +80,7 @@ export default function ServiceItem({
               {/* Categoría */}
               <div className="flex items-center space-x-1 mt-1">
                 <TagIcon className="h-4 w-4 text-[var(--color-muted)] dark:text-gray-400" />
-                <p className="text-sm text-[var(--color-muted)] dark:text-gray-400 mt-0">
+                <p className="text-sm text-[var(--color-muted)] dark:text-gray-400 mt-0 capitalize">
                   {service.category}
                 </p>
               </div>
@@ -113,7 +117,11 @@ export default function ServiceItem({
           variant={isSelected ? "primary" : "secondary"}
           size="sm"
           icon={
-            isSelected ? <CheckIcon className="h-4 w-4" /> : <PlusIcon className="h-4 w-4" />
+            isSelected ? (
+              <CheckIcon className="h-4 w-4" />
+            ) : (
+              <PlusIcon className="h-4 w-4" />
+            )
           }
         >
           {isSelected ? "Seleccionado" : "Seleccionar"}
