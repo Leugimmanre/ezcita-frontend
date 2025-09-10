@@ -1,56 +1,71 @@
-// src/services/servicesAPI.jsx
+// Código en inglés; comentarios en español
 import api from "@/lib/axios.js";
 
-// Obtener todos los servicios con filtros opcionales
+/**
+ * Obtener todos los servicios
+ */
 export const getServices = async () => {
-  const response = await api.get("/services");
-  return response.data.data;
+  const { data } = await api.get("/services");
+  // Homogeneizamos: devolvemos siempre data.data si existe
+  return data?.data ?? [];
 };
 
-// Obtener un servicio por ID
+/**
+ * Obtener un servicio por ID
+ */
 export const getServiceById = async (id) => {
-  const response = await api.get(`/services/${id}`);
-  return response.data;
+  const { data } = await api.get(`/services/${id}`);
+  return data?.data ?? data;
 };
 
-// Crear un nuevo servicio
-export const createService = async (data) => {
-  const response = await api.post("/services", data);
-  return response.data;
+/**
+ * Crear un nuevo servicio
+ */
+export const createService = async (payload) => {
+  const { data } = await api.post("/services", payload);
+  return data?.data ?? data;
 };
 
-// Actualizar un servicio por ID
-export const updateService = async (id, data) => {
-  const response = await api.put(`/services/${id}`, data);
-  return response.data;
+/**
+ * Actualizar un servicio por ID
+ */
+export const updateService = async (id, payload) => {
+  const { data } = await api.put(`/services/${id}`, payload);
+  return data?.data ?? data;
 };
 
-// Eliminar un servicio por ID (borrado lógico o físico)
+/**
+ * Eliminar un servicio por ID
+ */
 export const deleteService = async (id) => {
-  const response = await api.delete(`/services/${id}`);
-  return response.data;
+  const { data } = await api.delete(`/services/${id}`);
+  return data?.data ?? data;
 };
 
-// Subir UNA imagen a un servicio
+/**
+ * Subir UNA imagen a un servicio
+ * Backend espera el campo 'image' (uploadDisk.single("image"))
+ * ⚠️ No forzar 'Content-Type': axios lo gestiona con boundary
+ */
 export const uploadServiceImage = async ({ serviceId, file, alt = "" }) => {
-  // Usar FormData para multipart
   const formData = new FormData();
-  formData.append("file", file);
+  // 👇 Nombre de campo correcto para que Multer la lea
+  formData.append("image", file);
   if (alt) formData.append("alt", alt);
 
-  const response = await api.post(`/services/${serviceId}/images`, formData, {
-    headers: {
-      // No fuerces Content-Type: axios lo gestiona con boundary
-      // "Content-Type": "multipart/form-data",
-    },
-  });
-  return response.data.data || response.data;
+  const { data } = await api.post(`/services/${serviceId}/images`, formData);
+  // El controller responde { success, data: imageDoc, ... }
+  return data?.data ?? data;
 };
 
-// Eliminar UNA imagen del servicio
+/**
+ * Eliminar UNA imagen del servicio
+ * Mandamos el publicId en el cuerpo de la petición (config.data)
+ * (evita problemas de encoding si el publicId es largo)
+ */
 export const deleteServiceImage = async ({ serviceId, publicId }) => {
   const { data } = await api.delete(`/services/${serviceId}/images`, {
-    params: { publicId },
+    data: { publicId },
   });
-  return data.data;
+  return data?.data ?? data;
 };
