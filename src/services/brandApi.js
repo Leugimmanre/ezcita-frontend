@@ -17,10 +17,9 @@ export async function updateBrandSettings(payload) {
 
 /** Upload/replace logo (FormData field: "logo") */
 export async function uploadBrandLogo(file) {
-  const form = new FormData();
-  form.append("logo", file); // 👈 nombre de campo exacto que espera Multer
-  const { data } = await api.post("/brand/logo", form); // no fuerces Content-Type
-  // { url, publicId, provider, filename, mimetype, size }
+  const fd = new FormData();
+  fd.set("logo", file);
+  const { data } = await api.post("/brand/logo", fd); // no fuerces Content-Type
   return data?.data ?? null;
 }
 
@@ -32,10 +31,9 @@ export async function deleteBrandLogo() {
 
 /** Upload/replace hero (FormData field: "hero") */
 export async function uploadBrandHero(file) {
-  const form = new FormData();
-  form.append("hero", file); // 👈 nombre de campo exacto
-  const { data } = await api.post("/brand/hero", form);
-  // { url, publicId, provider, filename, mimetype, size }
+  const fd = new FormData();
+  fd.set("hero", file);
+  const { data } = await api.post("/brand/hero", fd);
   return data?.data ?? null;
 }
 
