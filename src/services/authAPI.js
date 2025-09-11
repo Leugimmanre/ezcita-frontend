@@ -1,57 +1,100 @@
-// src/services/authAPI.js
+// Código en inglés; comentarios en español
 import api from "@/lib/axios";
 import { setToken, clearToken } from "@/utils/authStorage";
+import { getTenantId } from "@/utils/tenantStorage";
+
+/** helper: obtiene tenant actual (con fallback) */
+function currentTenant() {
+  return getTenantId() || import.meta.env.VITE_TENANT_ID || "default";
+}
 
 export const authAPI = {
-  // Registro
+  // Registro (PÚBLICO). Si tu backend requiere tenant en query, añádelo:
   async register({ name, lastname, email, password }) {
-    const { data } = await api.post("/auth/register", {
-      name,
-      lastname,             // ← requerido por tu modelo
-      email: email.toLowerCase().trim(),
-      password,
-      // tenantId NO es necesario en body: ya va por header x-tenant-id
-    });
+    const tenant = currentTenant();
+    const { data } = await api.post(
+      "/auth/register",
+      {
+        name,
+        lastname, // ← requerido por tu modelo
+        email: email.toLowerCase().trim(),
+        password,
+      },
+      {
+        // 👇 público: sin Authorization/x-tenant-id
+        meta: { public: true },
+        params: { tenant },
+      }
+    );
     return data; // { success, data, message? }
   },
 
-  // Reenviar token verificación
+  // Reenviar token verificación (PÚBLICO)
   async resendToken(email) {
-    const { data } = await api.post("/auth/resend-token", { email });
+    const tenant = currentTenant();
+    const { data } = await api.post(
+      "/auth/resend-token",
+      { email },
+      { meta: { public: true }, params: { tenant } }
+    );
     return data;
   },
 
-  // Confirmar cuenta
+  // Confirmar cuenta (PÚBLICO)
   async confirmAccount(token) {
-    const { data } = await api.post("/auth/confirm-account", { token });
+    const tenant = currentTenant();
+    const { data } = await api.post(
+      "/auth/confirm-account",
+      { token },
+      { meta: { public: true }, params: { tenant } }
+    );
     return data;
   },
 
-  // Login
+  // Login (PÚBLICO)
   async login({ email, password }) {
-    const { data } = await api.post("/auth/login", {
-      email: email.toLowerCase().trim(),
-      password,
-    });
+    const tenant = currentTenant();
+    const { data } = await api.post(
+      "/auth/login",
+      {
+        email: email.toLowerCase().trim(),
+        password,
+      },
+      {
+        // 👇 público: sin Authorization/x-tenant-id
+        meta: { public: true },
+        params: { tenant }, // el backend lo lee como ?tenant=...
+      }
+    );
     if (data?.success && data?.data?.token) {
       setToken(data.data.token);
     }
     return data;
   },
 
-  // Olvidé mi contraseña
+  // Olvidé mi contraseña (PÚBLICO)
   async forgotPassword(email) {
-    const { data } = await api.post("/auth/forgot-password", { email });
+    const tenant = currentTenant();
+    const { data } = await api.post(
+      "/auth/forgot-password",
+      { email },
+      { meta: { public: true }, params: { tenant } }
+    );
     return data;
   },
 
-  // Resetear contraseña
+  // Resetear contraseña (PÚBLICO)
   async resetPassword({ token, password }) {
-    const { data } = await api.post("/auth/reset-password", { token, password });
+    const tenant = currentTenant();
+    const { data } = await api.post(
+      "/auth/reset-password",
+      { token, password },
+      { meta: { public: true }, params: { tenant } }
+    );
     return data;
   },
 
-  // Logout (limpia token)
+  // Logout (local)
   logout() {
     clearToken();
   },

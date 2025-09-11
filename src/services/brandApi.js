@@ -1,21 +1,30 @@
-// src/services/brandApi.js
+// Código en inglés; comentarios en español
 import api from "@/lib/axios";
+import { getTenantId } from "@/utils/tenantStorage";
 
-/** Get brand settings for current tenant */
+/** helper: obtiene tenant actual (con fallback a .env o 'default') */
+function currentTenant() {
+  return getTenantId() || import.meta.env.VITE_TENANT_ID || "default";
+}
+
+/** Get brand settings for current tenant (PÚBLICO) */
 export async function getBrandSettings() {
-  const { data } = await api.get("/brand");
+  const tenant = currentTenant();
+  // 👇 público: sin Authorization ni x-tenant-id; pasa ?tenant=...
+  const { data } = await api.get("/brand", {
+    params: { tenant },
+    meta: { public: true },
+  });
   return data?.data ?? null;
 }
 
-/** Upsert brand settings
- * payload: { brandName, brandDomain, contactEmail, timezone, frontendUrl }
- */
+/** Upsert brand settings (PROTEGIDO) */
 export async function updateBrandSettings(payload) {
   const { data } = await api.put("/brand", payload);
   return data?.data ?? null;
 }
 
-/** Upload/replace logo (FormData field: "logo") */
+/** Upload/replace logo (FormData field: "logo") (PROTEGIDO) */
 export async function uploadBrandLogo(file) {
   const fd = new FormData();
   fd.set("logo", file);
@@ -23,13 +32,13 @@ export async function uploadBrandLogo(file) {
   return data?.data ?? null;
 }
 
-/** Delete logo */
+/** Delete logo (PROTEGIDO) */
 export async function deleteBrandLogo() {
   const { data } = await api.delete("/brand/logo");
   return data;
 }
 
-/** Upload/replace hero (FormData field: "hero") */
+/** Upload/replace hero (FormData field: "hero") (PROTEGIDO) */
 export async function uploadBrandHero(file) {
   const fd = new FormData();
   fd.set("hero", file);
@@ -37,7 +46,7 @@ export async function uploadBrandHero(file) {
   return data?.data ?? null;
 }
 
-/** Delete hero */
+/** Delete hero (PROTEGIDO) */
 export async function deleteBrandHero() {
   const { data } = await api.delete("/brand/hero");
   return data;
@@ -56,7 +65,6 @@ export function getApiOrigin() {
       return "";
     }
   }
-  // fallback al mismo origen del navegador
   return typeof window !== "undefined" ? window.location.origin : "";
 }
 
