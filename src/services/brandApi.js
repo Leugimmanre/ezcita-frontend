@@ -10,7 +10,7 @@ function currentTenant() {
 /** Get brand settings for current tenant (PÚBLICO) */
 export async function getBrandSettings() {
   const tenant = currentTenant();
-  // 👇 público: sin Authorization ni x-tenant-id; pasa ?tenant=...
+  // público: sin Authorization ni x-tenant-id; pasa ?tenant=...
   const { data } = await api.get("/brand", {
     params: { tenant },
     meta: { public: true },
