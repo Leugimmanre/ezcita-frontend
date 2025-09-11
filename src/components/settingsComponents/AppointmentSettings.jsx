@@ -1,3 +1,4 @@
+// src/components/settingsComponents/AppointmentSettings.jsx
 import { useEffect, useState } from "react";
 import { generateTimeSlots } from "@/utils/generateTimeSlots";
 import { useAppointmentSettings } from "@/hooks/useAppointmentSettings";

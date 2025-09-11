@@ -1,3 +1,4 @@
+// src/hooks/title.jsx
 import { useEffect } from "react";
 
 // Hook personalizado para cambiar el título de la página

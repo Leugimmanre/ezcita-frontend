@@ -1,3 +1,4 @@
+// src/views/authViews/ForgotPasswordView.jsx
 import ForgotPassword from "@/components/authComponents/ForgotPassword";
 import { APP_NAME } from "@/data/index";
 import { useDocumentTitle } from "@/hooks/title";

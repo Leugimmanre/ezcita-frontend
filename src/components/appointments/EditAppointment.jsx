@@ -1,3 +1,4 @@
+// src/components/appointments/EditAppointment.jsx
 import { useNavigate, useParams } from "react-router-dom";
 import { useAppointmentSettings } from "@/hooks/useAppointmentSettings";
 import Appointment from "@/components/appointments/Appointment";

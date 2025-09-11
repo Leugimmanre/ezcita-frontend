@@ -8,25 +8,26 @@ import { useAppointmentSettings } from "@/hooks/useAppointmentSettings";
 import { useAppointmentsData } from "@/hooks/useAppointmentsData";
 
 export default function Appointments() {
+  // Navegación
   const navigate = useNavigate();
-
+  // Estado global de la cita en creación
   const { selectedServices, setSelectedServices, setAppointmentDetails } =
     useAppointment();
   const { data: settings, isLoading } = useAppointmentSettings();
   const { createAppointment, appointments } = useAppointmentsData();
-
+  // Si no hay servicios seleccionados, redirigir a la lista de servicios
   useEffect(() => {
     if (selectedServices.length === 0) {
       navigate("/appointments/my-appointments", { replace: true });
     }
   }, [selectedServices, navigate]);
-
+  // Cálculo de totales
   const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
   const totalDuration = selectedServices.reduce(
     (sum, s) => sum + s.duration,
     0
   );
-
+  // Confirmar cita
   const handleConfirmAppointment = (dateTime) => {
     createAppointment(
       {
@@ -48,7 +49,7 @@ export default function Appointments() {
       }
     );
   };
-
+  // Función para volver a la selección de servicios
   const goBackToServices = () => navigate("/appointments/new");
   if (isLoading) return <p className="text-white">Cargando configuración...</p>;
 

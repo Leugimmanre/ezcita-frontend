@@ -1,18 +1,664 @@
 // src/views/settingsViews/SettingsAppointmentsViews.jsx
-import { useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { getServices } from "@/services/servicesAPI";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import { searchUsers } from "@/services/userAPI";
+import { adminCreateAppointment, getAppointmentSettings } from "@/services/appointmentSettingsAPI";
 import {
   completeAppointment,
   deleteAppointment,
   getAppointments2,
+  updateAppointment,
 } from "@/services/appointmentsAPI";
-import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import { generateTimeSlots } from "@/utils/generateTimeSlots";
 
+// Utils
+const normalize = (s) =>
+  (s ?? "")
+    .toString()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
+
+function addMinutes(date, min) {
+  const d = new Date(date);
+  d.setMinutes(d.getMinutes() + min);
+  return d;
+}
+function dayBoundsISO(date) {
+  const d0 = new Date(date);
+  d0.setHours(0, 0, 0, 0);
+  const d1 = new Date(date);
+  d1.setHours(23, 59, 59, 999);
+  return { start: d0.toISOString(), end: d1.toISOString() };
+}
+function hourMinOf(date) {
+  return date.getHours() + date.getMinutes() / 60;
+}
+function fitsBlock(date, durationMin, lunchStart, lunchEnd, endHour) {
+  if (!durationMin || durationMin <= 0) return false;
+  const startHM = hourMinOf(date);
+  const endHM = startHM + durationMin / 60;
+  if (endHM > endHour) return false;
+  const crossesLunch =
+    startHM < lunchEnd &&
+    endHM > lunchStart &&
+    !(endHM <= lunchStart || startHM >= lunchEnd);
+  const fullyMorning = endHM <= lunchStart;
+  const fullyAfternoon = startHM >= lunchEnd;
+  return (fullyMorning || fullyAfternoon) && !crossesLunch;
+}
+function yyyy_mm_dd(date) {
+  const d = new Date(date);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+// Modal Crear/Editar (scrollable + footer fijo)
+function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
+  const queryClient = useQueryClient();
+
+  // Settings y servicios
+  const { data: settings } = useQuery({
+    queryKey: ["appointment-settings"],
+    queryFn: getAppointmentSettings,
+    enabled: isOpen,
+  });
+
+  const { data: servicesList = [] } = useQuery({
+    queryKey: ["services-all-for-appointments"],
+    queryFn: getServices,
+    enabled: isOpen,
+  });
+
+  // Estado UI
+  const [userQuery, setUserQuery] = useState("");
+  const [userOptions, setUserOptions] = useState([]);
+  const [fetchingUsers, setFetchingUsers] = useState(false);
+
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedServices, setSelectedServices] = useState([]);
+  const [status, setStatus] = useState("confirmed");
+  const [notes, setNotes] = useState("");
+
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const n = new Date();
+    n.setMinutes(0, 0, 0);
+    return n;
+  });
+  const [selectedTime, setSelectedTime] = useState(""); // "HH:mm"
+
+  // Trap ESC para cerrar
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, onClose]);
+
+  // Citas del día (para detectar solapes)
+  const { start, end } = dayBoundsISO(selectedDate);
+  const { data: dayData } = useQuery({
+    queryKey: ["admin-appointments-day", start, end],
+    queryFn: () =>
+      getAppointments2({
+        page: 1,
+        limit: 500,
+        startDate: start,
+        endDate: end,
+      }),
+    enabled: isOpen && !!settings,
+  });
+  const dayAppointments = dayData?.appointments ?? [];
+  const staffCount = settings?.staffCount ?? 1;
+
+  // Inicializar modal
+  useEffect(() => {
+    if (!isOpen) return;
+    if (mode === "edit" && initial) {
+      setSelectedUser(initial.user || null);
+      setSelectedServices(initial.services || []);
+      setStatus(initial.status || "confirmed");
+      setNotes(initial.notes || "");
+      const d = new Date(initial.date);
+      setSelectedDate(d);
+      setSelectedTime(
+        `${String(d.getHours()).padStart(2, "0")}:${String(
+          d.getMinutes()
+        ).padStart(2, "0")}`
+      );
+    } else {
+      setSelectedUser(null);
+      setSelectedServices([]);
+      setStatus("confirmed");
+      setNotes("");
+      const n = new Date();
+      n.setMinutes(0, 0, 0);
+      setSelectedDate(n);
+      setSelectedTime("");
+      setUserQuery("");
+      setUserOptions([]);
+    }
+  }, [isOpen, mode, initial]);
+
+  // Buscar usuarios (insensible a tildes en el cliente)
+  useEffect(() => {
+    let active = true;
+    const run = async () => {
+      if (!userQuery || userQuery.trim().length < 2) {
+        setUserOptions([]);
+        return;
+      }
+      try {
+        setFetchingUsers(true);
+        const data = await searchUsers(userQuery.trim());
+        if (!active) return;
+        const nq = normalize(userQuery.trim());
+        const filtered = (data || []).filter((u) => {
+          const hay = normalize(
+            `${u.name ?? ""} ${u.lastname ?? ""} ${u.email ?? ""}`
+          ).includes(nq);
+          return hay;
+        });
+        setUserOptions(filtered);
+      } catch {
+        if (!active) return;
+        setUserOptions([]);
+      } finally {
+        if (active) setFetchingUsers(false);
+      }
+    };
+    const t = setTimeout(run, 250);
+    return () => {
+      active = false;
+      clearTimeout(t);
+    };
+  }, [userQuery]);
+
+  // Totales
+  const totals = useMemo(() => {
+    const duration = selectedServices.reduce(
+      (s, x) => s + Number(x?.duration || 0),
+      0
+    );
+    const price = selectedServices.reduce(
+      (s, x) => s + Number(x?.price || 0),
+      0
+    );
+    return { duration, price };
+  }, [selectedServices]);
+
+  // Slots del día
+  const slots = useMemo(() => {
+    if (!settings) return [];
+    return generateTimeSlots(
+      settings.startHour,
+      settings.endHour,
+      settings.interval
+    );
+  }, [settings]);
+
+  // Reglas de disponibilidad
+  const isSlotDisabled = (hhmm) => {
+    if (!settings) return true;
+    const [h, m] = hhmm.split(":").map(Number);
+    const candidate = new Date(selectedDate);
+    candidate.setHours(h, m, 0, 0);
+
+    // Día laborable
+    if (!settings.workingDays?.includes(candidate.getDay())) return true;
+    // Pasado
+    if (candidate < new Date()) return true;
+    // Bloque: no cruzar comida / fin jornada
+    const okBlock = fitsBlock(
+      candidate,
+      totals.duration,
+      settings.lunchStart,
+      settings.lunchEnd,
+      settings.endHour
+    );
+    if (!okBlock) return true;
+
+    // Capacidad: solapes
+    const end = addMinutes(candidate, totals.duration);
+    const overlapping = dayAppointments.filter((a) => {
+      if (!["pending", "confirmed"].includes(a.status)) return false;
+      if (initial?._id && a._id === initial._id) return false;
+      const aStart = new Date(a.date);
+      const aEnd = addMinutes(aStart, a.duration);
+      return aStart < end && aEnd > candidate;
+    }).length;
+
+    return (
+      overlapping >= staffCount ||
+      totals.duration <= 0 ||
+      !selectedServices.length
+    );
+  };
+
+  // Mutations
+  const createMut = useMutation({
+    mutationFn: adminCreateAppointment,
+    onSuccess: (res) => {
+      toast.success("Cita creada");
+      queryClient.invalidateQueries(["admin-appointments"]);
+      queryClient.invalidateQueries(["admin-appointments-day"]);
+      onSuccess?.(res);
+      onClose();
+    },
+    onError: (e) =>
+      toast.error(e?.response?.data?.error || "Error al crear la cita"),
+  });
+
+  const updateMut = useMutation({
+    mutationFn: ({ id, payload }) => updateAppointment(id, payload),
+    onSuccess: (res) => {
+      toast.success("Cita actualizada");
+      queryClient.invalidateQueries(["admin-appointments"]);
+      queryClient.invalidateQueries(["admin-appointments-day"]);
+      onSuccess?.(res);
+      onClose();
+    },
+    onError: (e) =>
+      toast.error(e?.response?.data?.error || "Error al actualizar la cita"),
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!settings) return;
+    if (!selectedServices.length)
+      return toast.error("Selecciona al menos un servicio");
+    if (!selectedTime) return toast.error("Selecciona una hora válida");
+
+    const [h, m] = selectedTime.split(":").map(Number);
+    const dt = new Date(selectedDate);
+    dt.setHours(h, m, 0, 0);
+
+    const iso = dt.toISOString();
+    const servicesIds = selectedServices.map((s) => s._id);
+
+    if (mode === "create") {
+      if (!selectedUser?._id) return toast.error("Selecciona un usuario");
+      createMut.mutate({
+        userId: selectedUser._id,
+        services: servicesIds,
+        date: iso,
+        notes,
+        status,
+      });
+    } else {
+      updateMut.mutate({
+        id: initial._id,
+        payload: { services: servicesIds, date: iso, status, notes },
+      });
+    }
+  };
+
+  if (!isOpen) return null;
+
+  // Rango fecha
+  const minDateStr = yyyy_mm_dd(new Date());
+  const maxDate = new Date();
+  if (settings?.maxMonthsAhead != null) {
+    maxDate.setMonth(maxDate.getMonth() + Number(settings.maxMonthsAhead || 0));
+  }
+  const maxDateStr = yyyy_mm_dd(maxDate);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/40 p-4 flex items-center justify-center overflow-y-auto"
+      role="dialog"
+      aria-modal="true"
+      onMouseDown={(e) => {
+        // Cerrar al hacer click en el fondo (no si clic dentro del cuadro)
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="bg-white rounded-2xl shadow-xl flex flex-col max-h-[90vh] w-full max-w-2xl mx-auto">
+        {/* Header fijo */}
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">
+            {mode === "create" ? "Nueva cita" : "Editar cita"}
+          </h2>
+          <button
+            onClick={onClose}
+            className="px-3 py-1 rounded-lg text-sm bg-gray-100 hover:bg-gray-200 transition-colors"
+          >
+            Cerrar
+          </button>
+        </div>
+
+        {/* Body scrollable */}
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+          <div 
+            className="flex-1 overflow-y-auto p-6 space-y-4"
+          >
+            {/* Usuario */}
+            {mode === "create" ? (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Usuario
+                </label>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="text"
+                    value={userQuery}
+                    onChange={(e) => setUserQuery(e.target.value)}
+                    placeholder="Buscar por nombre, apellido o email…"
+                    className="flex-1 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                  />
+                  {fetchingUsers && (
+                    <span className="text-xs text-gray-500">
+                      Buscando…
+                    </span>
+                  )}
+                </div>
+                
+                {userOptions.length > 0 && (
+                  <div className="mt-2 max-h-32 overflow-y-auto border rounded-lg shadow-sm">
+                    {userOptions.map((u) => (
+                      <button
+                        type="button"
+                        key={u._id}
+                        onClick={() => {
+                          setSelectedUser(u);
+                          setUserQuery(
+                            `${u.name ?? ""} ${u.lastname ?? ""} <${
+                              u.email ?? ""
+                            }>`.trim()
+                          );
+                          setUserOptions([]);
+                        }}
+                        className={`w-full text-left px-3 py-2 hover:bg-gray-50 transition-colors text-sm ${
+                          selectedUser?._id === u._id ? "bg-indigo-50 text-indigo-700" : ""
+                        }`}
+                      >
+                        <div className="font-medium">
+                          {u.name} {u.lastname}
+                        </div>
+                        <div className="text-xs text-gray-600">{u.email}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                
+                {selectedUser && (
+                  <p className="mt-2 text-xs text-gray-700 p-2 bg-green-50 rounded-lg">
+                    Seleccionado:{" "}
+                    <b>
+                      {selectedUser.name} {selectedUser.lastname}
+                    </b>{" "}
+                    — {selectedUser.email}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Usuario
+                </label>
+                <div className="px-3 py-2 border rounded-lg bg-gray-50 text-sm">
+                  {initial?.user?.name} {initial?.user?.lastname} —{" "}
+                  {initial?.user?.email}
+                </div>
+              </div>
+            )}
+
+            {/* Servicios */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Servicios
+              </label>
+              <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto p-1">
+                {servicesList.map((s) => {
+                  const checked = selectedServices.some((x) => x._id === s._id);
+                  return (
+                    <label
+                      key={s._id}
+                      className={`flex items-start gap-2 border rounded-lg p-2 hover:bg-gray-50 transition-colors cursor-pointer ${
+                        checked ? "bg-indigo-50 border-indigo-200" : ""
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) => {
+                          if (e.target.checked)
+                            setSelectedServices((arr) => [...arr, s]);
+                          else
+                            setSelectedServices((arr) =>
+                              arr.filter((x) => x._id !== s._id)
+                            );
+                        }}
+                        className="mt-1"
+                      />
+                      <div className="text-sm flex-1">
+                        <div className="font-medium">{s.name}</div>
+                        <div className="text-xs text-gray-600">
+                          {s.duration} min · {s.price} €
+                        </div>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+              <div className="mt-2 text-xs text-gray-700 p-2 bg-blue-50 rounded-lg">
+                <b>Duración total:</b> {totals.duration} min ·{" "}
+                <b>Precio total:</b> {totals.price} €
+              </div>
+            </div>
+
+            {/* Fecha / Estado */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Fecha
+                </label>
+                <input
+                  type="date"
+                  value={yyyy_mm_dd(selectedDate)}
+                  min={minDateStr}
+                  max={maxDateStr}
+                  onChange={(e) => {
+                    const [yy, mm, dd] = e.target.value.split("-").map(Number);
+                    const d = new Date(selectedDate);
+                    d.setFullYear(yy, mm - 1, dd);
+                    setSelectedDate(d);
+                    setSelectedTime("");
+                  }}
+                  className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Estado
+                </label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                >
+                  <option value="pending">Pendiente</option>
+                  <option value="confirmed">Confirmada</option>
+                  <option value="completed">Completada</option>
+                  <option value="cancelled">Cancelada</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Info settings */}
+            {settings && (
+              <div className="text-xs text-gray-600 p-2 bg-gray-50 rounded-lg">
+                Jornada: {settings.startHour}–{settings.endHour} · Comida:{" "}
+                {settings.lunchStart}–{settings.lunchEnd} · Intervalo:{" "}
+                {settings.interval}′ · Capacidad: {settings.staffCount}
+              </div>
+            )}
+
+            {/* Grid de horas */}
+            {settings && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Horarios disponibles
+                </label>
+                <div className="max-h-40 overflow-y-auto p-1 border rounded-lg">
+                  <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+                    {slots.map((hhmm) => {
+                      const disabled = isSlotDisabled(hhmm);
+                      const cls =
+                        "text-center text-xs font-medium p-2 rounded-lg transition " +
+                        (selectedTime === hhmm
+                          ? "bg-indigo-600 text-white ring-1 ring-indigo-300"
+                          : "bg-gray-100 text-gray-800 hover:bg-gray-200") +
+                        (disabled ? " opacity-40 cursor-not-allowed" : " cursor-pointer");
+                      return (
+                        <button
+                          key={hhmm}
+                          type="button"
+                          disabled={disabled}
+                          className={cls}
+                          onClick={() => !disabled && setSelectedTime(hhmm)}
+                        >
+                          {hhmm}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Notas */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Notas
+              </label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={2}
+                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                placeholder="Notas internas…"
+              />
+            </div>
+          </div>
+
+          {/* Footer fijo siempre visible */}
+          <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors text-sm"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={createMut.isLoading || updateMut.isLoading}
+              className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              {mode === "create" ? "Crear cita" : "Guardar cambios"}
+              {(createMut.isLoading || updateMut.isLoading) && (
+                <span className="ml-2">...</span>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Menú de acciones
+// ─────────────────────────────────────────────────────────────
+function ActionMenu({ onEdit, onComplete, onDelete }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="p-1 rounded-md hover:bg-gray-100 transition-colors"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-5 w-5 text-gray-500"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+          />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 z-10 mt-1 w-40 bg-white rounded-md shadow-lg border border-gray-200 py-1">
+          <button
+            onClick={() => {
+              onEdit();
+              setIsOpen(false);
+            }}
+            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+          >
+            Editar
+          </button>
+          <button
+            onClick={() => {
+              onComplete();
+              setIsOpen(false);
+            }}
+            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+          >
+            Completar
+          </button>
+          <button
+            onClick={() => {
+              onDelete();
+              setIsOpen(false);
+            }}
+            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 transition-colors"
+          >
+            Eliminar
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Vista principal con búsqueda insensible a acentos
+// ─────────────────────────────────────────────────────────────
 export default function SettingsAppointments() {
   const [page, setPage] = useState(1);
   const [confirmAction, setConfirmAction] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState("create");
+  const [editingAppt, setEditingAppt] = useState(null);
+
+  const [q, setQ] = useState("");
+
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, refetch } = useQuery({
@@ -25,7 +671,6 @@ export default function SettingsAppointments() {
     toast.success("Datos actualizados");
   };
 
-  // Mutación para eliminar
   const { mutateAsync: remove } = useMutation({
     mutationFn: (id) => deleteAppointment(id),
     onSuccess: () => {
@@ -35,7 +680,6 @@ export default function SettingsAppointments() {
     onError: () => toast.error("Error al eliminar la cita"),
   });
 
-  // Mutación para completar
   const { mutateAsync: complete } = useMutation({
     mutationFn: completeAppointment,
     onSuccess: () => {
@@ -45,16 +689,37 @@ export default function SettingsAppointments() {
     onError: () => toast.error("Error al completar la cita"),
   });
 
-  // Abrir modal de confirmación
   const handleConfirm = (action) => {
     setConfirmAction(() => action);
     setConfirmOpen(true);
   };
 
+  const { appointments = [], total = 0 } = data || {};
+  const PAGE_SIZE = 10;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  // Filtro local insensible a acentos
+  const nq = normalize(q);
+  const filtered = useMemo(() => {
+    if (!nq) return appointments;
+    return appointments.filter((a) => {
+      const userStr = normalize(
+        `${a.user?.name ?? ""} ${a.user?.lastname ?? ""} ${a.user?.email ?? ""}`
+      );
+      const servicesStr = normalize(
+        (a.services || []).map((s) => s.name).join(" ")
+      );
+      const dateStr = normalize(new Date(a.date).toLocaleString("es-ES"));
+      return (
+        userStr.includes(nq) || servicesStr.includes(nq) || dateStr.includes(nq)
+      );
+    });
+  }, [appointments, nq]);
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500" />
       </div>
     );
   }
@@ -75,19 +740,43 @@ export default function SettingsAppointments() {
     );
   }
 
-  const { appointments = [], total = 0 } = data || {};
-  const totalPages = Math.ceil(total / 10) || 1;
-
   return (
     <div className="mt-10 max-w-7xl mx-auto px-4">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Gestión de Citas</h1>
-        <button
-          onClick={refreshData}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white text-sm font-medium transition-all"
-        >
-          Actualizar
-        </button>
+        <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+          <input
+            type="text"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Buscar (nombre, email, servicio, fecha)…"
+            className="px-3 py-2 border rounded-lg w-full sm:w-80 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={refreshData}
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-800 text-sm font-medium transition-all"
+            >
+              Actualizar
+            </button>
+            <button
+              onClick={() => {
+                setModalMode("create");
+                setEditingAppt(null);
+                setModalOpen(true);
+              }}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white text-sm font-medium transition-all"
+            >
+              Nueva cita
+            </button>
+          </div>
+        </div>
+        {q && (
+          <div className="text-sm text-gray-500">
+            Mostrando {filtered.length} de {appointments.length} resultados
+            (página {page})
+          </div>
+        )}
       </div>
 
       <div className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
@@ -119,7 +808,7 @@ export default function SettingsAppointments() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {appointments.map((appt) => {
+              {filtered.map((appt) => {
                 const apptDate = new Date(appt.date);
                 const statusColor = {
                   pending: "bg-yellow-100 text-yellow-800",
@@ -180,19 +869,18 @@ export default function SettingsAppointments() {
                         {appt.status === "completed" && "Completada"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-center flex flex-col gap-2">
-                      <button
-                        onClick={() => handleConfirm(() => complete(appt._id))}
-                        className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs"
-                      >
-                        Completar
-                      </button>
-                      <button
-                        onClick={() => handleConfirm(() => remove(appt._id))}
-                        className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs"
-                      >
-                        Eliminar
-                      </button>
+                    <td className="px-6 py-4 text-center">
+                      <ActionMenu
+                        onEdit={() => {
+                          setModalMode("edit");
+                          setEditingAppt(appt);
+                          setModalOpen(true);
+                        }}
+                        onComplete={() =>
+                          handleConfirm(() => complete(appt._id))
+                        }
+                        onDelete={() => handleConfirm(() => remove(appt._id))}
+                      />
                     </td>
                   </tr>
                 );
@@ -206,7 +894,7 @@ export default function SettingsAppointments() {
           <button
             disabled={page === 1}
             onClick={() => setPage((prev) => prev - 1)}
-            className={`px-4 py-2 rounded-lg ${
+            className={`px-4 py-2 rounded-lg transition-colors ${
               page === 1
                 ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                 : "bg-indigo-600 hover:bg-indigo-700 text-white"
@@ -214,13 +902,15 @@ export default function SettingsAppointments() {
           >
             Anterior
           </button>
+
           <span className="text-sm text-gray-700">
             Página <b>{page}</b> de <b>{totalPages}</b>
           </span>
+
           <button
             disabled={page >= totalPages}
             onClick={() => setPage((prev) => prev + 1)}
-            className={`px-4 py-2 rounded-lg ${
+            className={`px-4 py-2 rounded-lg transition-colors ${
               page >= totalPages
                 ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                 : "bg-indigo-600 hover:bg-indigo-700 text-white"
@@ -231,7 +921,6 @@ export default function SettingsAppointments() {
         </div>
       </div>
 
-      {/* Modal de confirmación */}
       <ConfirmDialog
         isOpen={confirmOpen}
         onClose={() => setConfirmOpen(false)}
@@ -239,7 +928,18 @@ export default function SettingsAppointments() {
         message="¿Estás seguro de realizar esta acción?"
         confirmText="Sí, continuar"
         cancelText="Cancelar"
-        onConfirm={confirmAction}
+        onConfirm={() => {
+          confirmAction?.();
+          setConfirmOpen(false);
+        }}
+      />
+
+      <AppointmentFormModal
+        isOpen={modalOpen}
+        mode={modalMode}
+        initial={editingAppt}
+        onClose={() => setModalOpen(false)}
+        onSuccess={() => {}}
       />
     </div>
   );

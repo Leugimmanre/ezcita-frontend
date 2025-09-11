@@ -1,5 +1,5 @@
 
-// import { NavLink, Outlet, useLocation } from "react-router-dom";
+// src/layouts/NewAppointmentLayout.jsx
 import { NavLink, Outlet } from "react-router-dom";
 
 export default function NewAppointmentLayout() {

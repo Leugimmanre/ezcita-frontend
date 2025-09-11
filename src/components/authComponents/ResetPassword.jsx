@@ -1,3 +1,4 @@
+// src/components/authComponents/ResetPassword.jsx
 import React, { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { authAPI } from "@/services/authAPI";

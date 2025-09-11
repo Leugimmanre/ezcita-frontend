@@ -1,3 +1,4 @@
+// src/components/ui/ServiceCard.jsx
 import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import DeleteServiceButton from "./DeleteServiceButton";

@@ -1,3 +1,4 @@
+// src/components/appointments/Appointment.jsx
 import { MAX_SERVICES_SELECTION } from "@/data/index";
 import { useAppointment } from "@/hooks/useAppointment";
 import { useState, useEffect } from "react";

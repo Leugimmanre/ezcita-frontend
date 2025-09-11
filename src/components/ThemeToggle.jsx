@@ -1,4 +1,4 @@
-// components/ThemeToggle.jsx
+// src/components/ThemeToggle.jsx
 import { useTheme } from "@/hooks/useTheme";
 
 export default function ThemeToggle() {

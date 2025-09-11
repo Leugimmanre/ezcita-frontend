@@ -1,3 +1,4 @@
+// src/components/ui/DeleteServiceButton.jsx
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteService } from "@/services/servicesAPI";
 import { toast } from "react-toastify";

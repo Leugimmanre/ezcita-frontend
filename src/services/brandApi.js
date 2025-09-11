@@ -1,4 +1,4 @@
-// Código en inglés; comentarios en español
+// src/services/brandApi.js
 import api from "@/lib/axios";
 
 /** Get brand settings for current tenant */

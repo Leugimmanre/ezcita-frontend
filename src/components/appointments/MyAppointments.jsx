@@ -1,3 +1,4 @@
+// src/components/appointments/MyAppointments.jsx
 import { useAppointmentsData } from "@/hooks/useAppointmentsData";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -8,9 +9,10 @@ import { useQueryClient } from "@tanstack/react-query";
 export default function MyAppointments() {
   const { appointments, isLoading, cancelAppointment } = useAppointmentsData();
   const [cancellingId, setCancellingId] = useState(null);
+  // Navegación
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
+// Maneja la cancelación de una cita
   const handleCancel = async (id) => {
     setCancellingId(id);
     try {
@@ -21,6 +23,7 @@ export default function MyAppointments() {
     }
   };
 
+  // Maneja la reactivación de una cita cancelada
   const handleReactivate = async (id) => {
     try {
       await reactivateAppointment(id);
@@ -31,7 +34,7 @@ export default function MyAppointments() {
       toast.error("Error al reactivar la cita");
     }
   };
-
+// Navega a la edición de una cita
   const handleEditClick = (apptId) => {
     navigate(`/appointments/edit/${apptId}`);
   };

@@ -1,3 +1,4 @@
+// src/views/appointments/EditAppointmentView.jsx
 import EditAppointment from "@/components/appointments/EditAppointment";
 import { useDocumentTitle } from "@/hooks/title";
 import { APP_NAME } from "@/data/index";

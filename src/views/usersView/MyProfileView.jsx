@@ -1,3 +1,4 @@
+// src/views/usersView/MyProfileView.jsx
 import MyProfile from "@/components/settingsComponents/MyProfile";
 import { APP_NAME } from "@/data/index";
 import { useDocumentTitle } from "@/hooks/title";

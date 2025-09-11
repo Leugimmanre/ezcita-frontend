@@ -1,3 +1,4 @@
+// src/services/userAPI.js
 import api from "@/lib/axios";
 
 // Obtener todos los usuarios
@@ -72,3 +73,8 @@ export const changePassword = async (id, payload) => {
   const { data } = await api.patch(`/users/${id}/password`, payload);
   return data.data; // asumiendo { success, data }
 };
+
+export async function searchUsers(query, { limit = 20 } = {}) {
+  const { data } = await api.get("/users", { params: { q: query, limit } });
+  return data?.users || data?.data || data || [];
+}

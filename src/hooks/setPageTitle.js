@@ -1,4 +1,4 @@
-// middlewares/setPageTitle.js
+// src/hooks/setPageTitle.js
 import { getBrandSettings } from "@/services/brandApi";
 
 let cachedBrandName = null;
