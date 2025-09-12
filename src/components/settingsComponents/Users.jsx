@@ -1,5 +1,5 @@
 // src/components/settingsComponents/Users.jsx
-import { useState } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUsersData } from "@/hooks/useUsersData";
 import CreateUserModal from "../settingsComponents/CreateUserModal";
@@ -16,7 +16,84 @@ export default function Users() {
   const [confirmAction, setConfirmAction] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [menuPosition, setMenuPosition] = useState("bottom");
   const navigate = useNavigate();
+  const menuRefs = useRef({});
+  const tableContainerRef = useRef();
+
+  // Función para normalizar texto (eliminar acentos y convertir a minúsculas)
+  const normalizeText = (text) => {
+    return text
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  };
+
+  // Filtrar usuarios según el término de búsqueda
+  const filteredUsers = useMemo(() => {
+    if (!searchTerm) return users;
+    
+    const normalizedSearch = normalizeText(searchTerm);
+    return users.filter(user => 
+      normalizeText(user.name).includes(normalizedSearch) ||
+      normalizeText(user.email).includes(normalizedSearch) ||
+      (user.phone && normalizeText(user.phone).includes(normalizedSearch)) ||
+      normalizeText(user.admin ? "admin" : "user").includes(normalizedSearch) ||
+      normalizeText(user.verified ? "sí" : "no").includes(normalizedSearch)
+    );
+  }, [users, searchTerm]);
+
+  // Efecto para cerrar menús al hacer scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      setOpenMenuId(null);
+    };
+
+    window.addEventListener('scroll', handleScroll, true);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+    };
+  }, []);
+
+  // Efecto para cerrar menús al hacer clic fuera de ellos
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openMenuId) {
+        const menuElement = menuRefs.current[openMenuId];
+        if (menuElement && !menuElement.contains(event.target)) {
+          setOpenMenuId(null);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openMenuId]);
+
+  // Función para determinar la posición del menú
+  const calculateMenuPosition = (userId, index) => {
+    if (!tableContainerRef.current) return;
+    
+    const tableRect = tableContainerRef.current.getBoundingClientRect();
+    const rowHeight = 70; // Altura aproximada de cada fila
+    const menuHeight = 120; // Altura aproximada del menú
+    
+    // Calcular si el menú cabe debajo
+    const spaceBelow = tableRect.bottom - (tableRect.top + (index + 1) * rowHeight);
+    
+    if (spaceBelow < menuHeight) {
+      setMenuPosition("top");
+    } else {
+      setMenuPosition("bottom");
+    }
+    
+    setOpenMenuId(openMenuId === userId ? null : userId);
+  };
 
   const refreshData = async () => {
     try {
@@ -38,6 +115,7 @@ export default function Users() {
       try {
         await deleteUser(userId);
         toast.success(`Usuario "${userName}" eliminado correctamente`);
+        setOpenMenuId(null); // Cerrar el menú después de eliminar
       } catch (e) {
         toast.error(
           e?.response?.data?.message ||
@@ -95,7 +173,28 @@ export default function Users() {
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
+      {/* Barra de búsqueda */}
+      <div className="mb-6">
+        <div className="relative max-w-md">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <input
+            type="text"
+            placeholder="Buscar usuarios (soporta caracteres latinos)..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          />
+        </div>
+      </div>
+
+      <div 
+        ref={tableContainerRef}
+        className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden"
+      >
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -121,8 +220,15 @@ export default function Users() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {users.map((u) => (
-                <tr key={u._id} className="hover:bg-gray-50 transition-colors">
+              {filteredUsers.map((u, index) => (
+                <tr 
+                  key={u._id} 
+                  className="hover:bg-gray-50 transition-colors"
+                  style={{ 
+                    minHeight: '80px',
+                    height: index === filteredUsers.length - 1 ? '80px' : 'auto'
+                  }}
+                >
                   <td className="px-6 py-4">
                     <div className="text-sm font-medium text-gray-900">
                       {u.name}
@@ -159,38 +265,66 @@ export default function Users() {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex justify-center space-x-2">
-                      <button
-                        onClick={() => navigate(`/settings/users/${u._id}`)}
-                        className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs transition-colors"
-                      >
-                        Detalles
-                      </button>
-                      <button
-                        onClick={() => setEditId(u._id)}
-                        className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs transition-colors"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        disabled={isDeleting}
-                        onClick={() => handleDelete(u._id, u.name)}
-                        className="px-3 py-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-lg text-xs transition-colors"
-                      >
-                        {isDeleting ? "Eliminando..." : "Eliminar"}
-                      </button>
+                    <div className="flex justify-center">
+                      <div className="relative">
+                        <button
+                          onClick={() => calculateMenuPosition(u._id, index)}
+                          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                          </svg>
+                        </button>
+                        
+                        {openMenuId === u._id && (
+                          <div 
+                            ref={el => menuRefs.current[u._id] = el}
+                            className={`absolute right-0 z-50 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 ${
+                              menuPosition === "top" 
+                                ? "bottom-full mb-1" 
+                                : "top-full mt-1"
+                            }`}
+                          >
+                            <button
+                              onClick={() => {
+                                navigate(`/settings/users/${u._id}`);
+                                setOpenMenuId(null);
+                              }}
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              Ver detalles
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditId(u._id);
+                                setOpenMenuId(null);
+                              }}
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              Editar
+                            </button>
+                            <button
+                              disabled={isDeleting}
+                              onClick={() => handleDelete(u._id, u.name)}
+                              className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 disabled:text-gray-400"
+                            >
+                              {isDeleting ? "Eliminando..." : "Eliminar"}
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </td>
                 </tr>
               ))}
 
-              {users.length === 0 && (
+              {filteredUsers.length === 0 && (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="px-6 py-8 text-center text-gray-500 text-sm"
                   >
-                    No hay usuarios registrados
+                    {searchTerm ? "No se encontraron usuarios que coincidan con la búsqueda" : "No hay usuarios registrados"}
                   </td>
                 </tr>
               )}

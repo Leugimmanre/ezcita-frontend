@@ -582,11 +582,13 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Menú de acciones
+// Menú de acciones - VERSIÓN MEJORADA (sin cierre en scroll)
 // ─────────────────────────────────────────────────────────────
 function ActionMenu({ onEdit, onComplete, onDelete }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [menuDirection, setMenuDirection] = useState("bottom");
   const menuRef = useRef(null);
+  const buttonRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -598,10 +600,30 @@ function ActionMenu({ onEdit, onComplete, onDelete }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const calculateMenuDirection = () => {
+    if (!buttonRef.current) return "bottom";
+
+    const buttonRect = buttonRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - buttonRect.bottom;
+    const menuHeight = 120; // Altura aproximada del menú
+
+    // Si no hay suficiente espacio debajo pero sí arriba, abrir hacia arriba
+    if (spaceBelow < menuHeight && buttonRect.top > menuHeight) {
+      return "top";
+    }
+    return "bottom";
+  };
+
+  const handleButtonClick = () => {
+    const direction = calculateMenuDirection();
+    setMenuDirection(direction);
+    setIsOpen(!isOpen);
+  };
+
   return (
-    <div className="relative" ref={menuRef}>
+    <div className="relative" ref={buttonRef}>
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleButtonClick}
         className="p-1 rounded-md hover:bg-gray-100 transition-colors"
       >
         <svg
@@ -621,7 +643,12 @@ function ActionMenu({ onEdit, onComplete, onDelete }) {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 z-10 mt-1 w-40 bg-white rounded-md shadow-lg border border-gray-200 py-1">
+        <div
+          ref={menuRef}
+          className={`absolute right-0 z-50 w-40 bg-white rounded-md shadow-lg border border-gray-200 py-1 ${
+            menuDirection === "top" ? "bottom-full mb-1" : "top-full mt-1"
+          }`}
+        >
           <button
             onClick={() => {
               onEdit();
@@ -820,7 +847,7 @@ export default function SettingsAppointments() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filtered.map((appt) => {
+              {filtered.map((appt, index) => {
                 const apptDate = new Date(appt.date);
                 const statusColor = {
                   pending: "bg-yellow-100 text-yellow-800",
@@ -832,7 +859,11 @@ export default function SettingsAppointments() {
                 return (
                   <tr
                     key={appt._id}
-                    className="hover:bg-gray-50 transition-colors"
+                    className="hover:bg-gray-50 transition-colors group"
+                    style={{
+                      minHeight: "80px",
+                      height: index === filtered.length - 1 ? "100px" : "auto",
+                    }}
                   >
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-gray-900">
@@ -884,18 +915,20 @@ export default function SettingsAppointments() {
                         {appt.status === "completed" && "Completada"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-center">
-                      <ActionMenu
-                        onEdit={() => {
-                          setModalMode("edit");
-                          setEditingAppt(appt);
-                          setModalOpen(true);
-                        }}
-                        onComplete={() =>
-                          handleConfirm(() => complete(appt._id))
-                        }
-                        onDelete={() => handleConfirm(() => remove(appt._id))}
-                      />
+                    <td className="px-6 py-4 text-center relative">
+                      <div className="h-full flex items-center justify-center">
+                        <ActionMenu
+                          onEdit={() => {
+                            setModalMode("edit");
+                            setEditingAppt(appt);
+                            setModalOpen(true);
+                          }}
+                          onComplete={() =>
+                            handleConfirm(() => complete(appt._id))
+                          }
+                          onDelete={() => handleConfirm(() => remove(appt._id))}
+                        />
+                      </div>
                     </td>
                   </tr>
                 );
