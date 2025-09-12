@@ -25,6 +25,7 @@ export default function Registration() {
       const payload = {
         name: data.name,
         lastname: data.lastname,
+        ...(data.phone ? { phone: data.phone.trim() } : {}),
         email: data.email.toLowerCase().trim(),
         password: data.password,
       };

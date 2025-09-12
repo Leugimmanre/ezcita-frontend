@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 const createUserSchema = z.object({
   name: z.string().min(1, "Name is required"),
   lastname: z.string().optional(),
+  phone: z.string().optional(),
   email: z.string().email("Invalid email"),
   password: z.string().min(6, "Min 6 characters").optional(),
   admin: z.boolean().optional().default(false),
@@ -85,6 +86,31 @@ export default function UserForm({
           placeholder="Ingresa los apellidos"
           {...register("lastname")}
         />
+      </div>
+
+      {/* Teléfono (opcional) */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Teléfono
+        </label>
+        <input
+          type="text"
+          {...register("phone", {
+            pattern: {
+              value: /^\+?[0-9\s\-().]{7,20}$/,
+              message: "Formato de teléfono inválido",
+            },
+            maxLength: { value: 20, message: "Máximo 20 caracteres" },
+          })}
+          className={`w-full px-3 py-2 border ${
+            errors.phone ? "border-red-300" : "border-gray-300"
+          } rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500`}
+          placeholder="+34 612 345 678"
+          disabled={isSubmitting}
+        />
+        {errors.phone && (
+          <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>
+        )}
       </div>
 
       {/* Email */}

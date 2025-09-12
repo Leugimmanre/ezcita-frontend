@@ -5,7 +5,10 @@ import { toast } from "react-toastify";
 import { getServices } from "@/services/servicesAPI";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { searchUsers } from "@/services/userAPI";
-import { adminCreateAppointment, getAppointmentSettings } from "@/services/appointmentSettingsAPI";
+import {
+  adminCreateAppointment,
+  getAppointmentSettings,
+} from "@/services/appointmentSettingsAPI";
 import {
   completeAppointment,
   deleteAppointment,
@@ -80,7 +83,7 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
 
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedServices, setSelectedServices] = useState([]);
-  const [status, setStatus] = useState("confirmed");
+  const [status, setStatus] = useState("pending");
   const [notes, setNotes] = useState("");
 
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -120,7 +123,7 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
     if (mode === "edit" && initial) {
       setSelectedUser(initial.user || null);
       setSelectedServices(initial.services || []);
-      setStatus(initial.status || "confirmed");
+      setStatus(initial.status || "pending");
       setNotes(initial.notes || "");
       const d = new Date(initial.date);
       setSelectedDate(d);
@@ -132,7 +135,7 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
     } else {
       setSelectedUser(null);
       setSelectedServices([]);
-      setStatus("confirmed");
+      setStatus("pending");
       setNotes("");
       const n = new Date();
       n.setMinutes(0, 0, 0);
@@ -158,7 +161,9 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
         const nq = normalize(userQuery.trim());
         const filtered = (data || []).filter((u) => {
           const hay = normalize(
-            `${u.name ?? ""} ${u.lastname ?? ""} ${u.email ?? ""}`
+            `${u.name ?? ""} ${u.lastname ?? ""} ${u.phone ?? ""} ${
+              u.email ?? ""
+            }`
           ).includes(nq);
           return hay;
         });
@@ -331,10 +336,11 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
         </div>
 
         {/* Body scrollable */}
-        <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
-          <div 
-            className="flex-1 overflow-y-auto p-6 space-y-4"
-          >
+        <form
+          onSubmit={handleSubmit}
+          className="flex-1 flex flex-col overflow-hidden"
+        >
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {/* Usuario */}
             {mode === "create" ? (
               <div>
@@ -350,12 +356,10 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
                     className="flex-1 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
                   />
                   {fetchingUsers && (
-                    <span className="text-xs text-gray-500">
-                      Buscando…
-                    </span>
+                    <span className="text-xs text-gray-500">Buscando…</span>
                   )}
                 </div>
-                
+
                 {userOptions.length > 0 && (
                   <div className="mt-2 max-h-32 overflow-y-auto border rounded-lg shadow-sm">
                     {userOptions.map((u) => (
@@ -367,30 +371,33 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
                           setUserQuery(
                             `${u.name ?? ""} ${u.lastname ?? ""} <${
                               u.email ?? ""
-                            }>`.trim()
+                            }> <${u.phone ?? ""}>`.trim()
                           );
                           setUserOptions([]);
                         }}
                         className={`w-full text-left px-3 py-2 hover:bg-gray-50 transition-colors text-sm ${
-                          selectedUser?._id === u._id ? "bg-indigo-50 text-indigo-700" : ""
+                          selectedUser?._id === u._id
+                            ? "bg-indigo-50 text-indigo-700"
+                            : ""
                         }`}
                       >
                         <div className="font-medium">
                           {u.name} {u.lastname}
                         </div>
+                        <div className="text-xs text-gray-600">{u.phone}</div>
                         <div className="text-xs text-gray-600">{u.email}</div>
                       </button>
                     ))}
                   </div>
                 )}
-                
+
                 {selectedUser && (
                   <p className="mt-2 text-xs text-gray-700 p-2 bg-green-50 rounded-lg">
                     Seleccionado:{" "}
                     <b>
                       {selectedUser.name} {selectedUser.lastname}
                     </b>{" "}
-                    — {selectedUser.email}
+                    — {selectedUser.phone}— {selectedUser.email}
                   </p>
                 )}
               </div>
@@ -401,6 +408,7 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
                 </label>
                 <div className="px-3 py-2 border rounded-lg bg-gray-50 text-sm">
                   {initial?.user?.name} {initial?.user?.lastname} —{" "}
+                  {initial?.user?.phone}
                   {initial?.user?.email}
                 </div>
               </div>
@@ -512,7 +520,9 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
                         (selectedTime === hhmm
                           ? "bg-indigo-600 text-white ring-1 ring-indigo-300"
                           : "bg-gray-100 text-gray-800 hover:bg-gray-200") +
-                        (disabled ? " opacity-40 cursor-not-allowed" : " cursor-pointer");
+                        (disabled
+                          ? " opacity-40 cursor-not-allowed"
+                          : " cursor-pointer");
                       return (
                         <button
                           key={hhmm}
@@ -704,7 +714,9 @@ export default function SettingsAppointments() {
     if (!nq) return appointments;
     return appointments.filter((a) => {
       const userStr = normalize(
-        `${a.user?.name ?? ""} ${a.user?.lastname ?? ""} ${a.user?.email ?? ""}`
+        `${a.user?.name ?? ""} ${a.user?.lastname ?? ""} ${
+          a.user?.phone ?? ""
+        } ${a.user?.email ?? ""}`
       );
       const servicesStr = normalize(
         (a.services || []).map((s) => s.name).join(" ")
@@ -844,6 +856,9 @@ export default function SettingsAppointments() {
                       </div>
                       <div className="text-sm text-gray-500">
                         {appt.user?.email ?? ""}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {appt.user?.phone ?? ""}
                       </div>
                     </td>
                     <td className="px-6 py-4">

@@ -96,6 +96,25 @@ export default function UserDetails() {
               </h2>
               <p className="text-gray-600 mb-4">{data.email}</p>
 
+              {data.phone && (
+                <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+                  <div className="p-2 bg-blue-100 rounded-lg mr-3">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 text-blue-600"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path d="M2 5a2 2 0 012-2h2a1 1 0 011 .76l.6 2.4a1 1 0 01-.25.95l-1.2 1.2a12 12 0 005.4 5.4l1.2-1.2a1 1 0 01.95-.25l2.4.6a1 1 0 01.76 1V16a2 2 0 01-2 2h-1C7.82 18 2 12.18 2 5V5z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Teléfono</p>
+                    <p className="font-medium text-gray-700">{data.phone}</p>
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex items-center p-3 bg-gray-50 rounded-lg">
                   <div className="p-2 bg-blue-100 rounded-lg mr-3">

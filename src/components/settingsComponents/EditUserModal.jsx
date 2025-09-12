@@ -96,6 +96,7 @@ export default function EditUserModal({ id, onClose }) {
               defaultValues={{
                 name: data.name,
                 lastname: data.lastname,
+                phone: data.phone || "",
                 email: data.email,
                 admin: data.admin,
                 verified: data.verified,

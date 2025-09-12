@@ -104,6 +104,9 @@ export default function Users() {
                   Nombre
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Teléfono
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Email
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -124,6 +127,11 @@ export default function Users() {
                     <div className="text-sm font-medium text-gray-900">
                       {u.name}
                     </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-900">
+                      {u.phone || "-"}
+                    </div>{" "}
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-900">{u.email}</div>

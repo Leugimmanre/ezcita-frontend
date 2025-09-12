@@ -252,6 +252,63 @@ export default function RegisterForm({ onSubmit, loading }) {
         )}
       </div>
 
+      {/* Teléfono (opcional) */}
+      <div>
+        <label
+          htmlFor="phone"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
+          Teléfono
+        </label>
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            {/* Icono teléfono */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 text-gray-400"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path d="M2 5a2 2 0 012-2h2a1 1 0 011 .76l.6 2.4a1 1 0 01-.25.95l-1.2 1.2a12 12 0 005.4 5.4l1.2-1.2a1 1 0 01.95-.25l2.4.6a1 1 0 01.76 1V16a2 2 0 01-2 2h-1C7.82 18 2 12.18 2 5V5z" />
+            </svg>
+          </div>
+          <input
+            id="phone"
+            type="text"
+            {...register("phone", {
+              // Validación flexible E.164/espacios/guiones/paréntesis
+              pattern: {
+                value: /^\+?[0-9\s\-().]{7,20}$/,
+                message: "Formato de teléfono inválido",
+              },
+              maxLength: { value: 20, message: "Máximo 20 caracteres" },
+            })}
+            className={`w-full pl-10 pr-3 py-3 border ${
+              errors.phone ? "border-red-300" : "border-gray-300"
+            } rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition shadow-sm`}
+            placeholder="+34 612 345 678"
+            disabled={loading}
+          />
+        </div>
+        {errors.phone && (
+          <div className="mt-2 flex items-start">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4 text-red-500 mt-0.5 mr-1 flex-shrink-0"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <p className="text-red-500 text-sm">{errors.phone.message}</p>
+          </div>
+        )}
+      </div>
+
       {/* Email */}
       <div>
         <label
