@@ -75,8 +75,6 @@ export default function SettingsHome() {
 
         {/* Cambios recientes (dinámico) con altura limitada */}
         <div className="bg-white rounded-xl p-6 shadow flex flex-col h-50">
-          {" "}
-          {/* Altura fija de 320px (20rem) */}
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-medium text-gray-900">
               Cambios Recientes
