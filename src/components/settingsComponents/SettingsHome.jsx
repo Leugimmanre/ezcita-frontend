@@ -1,13 +1,19 @@
 // src/pages/settings/SettingsHome.jsx
 import { Link } from "react-router-dom";
 import { CogIcon, ClockIcon } from "@heroicons/react/24/outline";
-import { recentSettings, settingCategories } from "@/data/index";
+import { settingCategories } from "@/data/index";
 import { Navigate, Outlet } from "react-router-dom";
+import { useRecentActivity } from "@/hooks/useActivity";
+import { timeAgo } from "@/utils/timeAgo";
 
 export default function SettingsHome() {
-
+  // Datos de actividad reciente
+  const { data, isLoading, isError, refetch, isFetching } =
+    useRecentActivity(8);
+  const lastUpdateAt = data?.lastUpdateAt || null;
+  const items = data?.items || [];
+  // Verifica rol de usuario
   const userData = JSON.parse(localStorage.getItem("user_EzCita"));
-
   if (!userData || userData.role !== "admin") {
     return <Navigate to="/appointments/my-appointments" replace />;
   }
@@ -21,17 +27,36 @@ export default function SettingsHome() {
             Administra todas las configuraciones de tu negocio en un solo lugar
           </p>
         </div>
+        {/* Última actualización (dinámica) */}
         <div className="bg-gray-100 p-4 rounded-lg flex items-center">
           <CogIcon className="h-10 w-10 text-gray-500 mr-3" />
           <div>
             <p className="text-sm font-medium text-gray-500">
               Última actualización
             </p>
-            <p className="font-semibold">Hace 2 días</p>
+            {isLoading ? (
+              <p className="font-semibold animate-pulse text-gray-400">
+                Cargando…
+              </p>
+            ) : lastUpdateAt ? (
+              <p className="font-semibold">{timeAgo(lastUpdateAt)}</p>
+            ) : (
+              <p className="font-semibold text-gray-500">
+                Sin cambios recientes
+              </p>
+            )}
+            <button
+              onClick={() => refetch()}
+              className="mt-1 text-xs text-blue-600 hover:text-blue-800"
+              disabled={isFetching}
+            >
+              {isFetching ? "Actualizando…" : "Actualizar"}
+            </button>
           </div>
         </div>
       </div>
 
+      {/* Consejo de Configuración */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
         <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl p-6 text-white shadow-lg">
           <h2 className="text-xl font-bold mb-2">Consejo de Configuración</h2>
@@ -48,33 +73,71 @@ export default function SettingsHome() {
           </Link>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
-            Cambios Recientes
-          </h3>
-          <ul className="divide-y divide-gray-200">
-            {recentSettings.map((item) => (
-              <li key={item.id} className="py-3 flex items-center">
-                <div className="bg-gray-100 p-2 rounded-lg mr-3">
-                  <CogIcon className="h-5 w-5 text-gray-500" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {item.action}
-                  </p>
-                  <p className="text-sm text-gray-500 truncate">
-                    {item.category}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">{item.time}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
+        {/* Cambios recientes (dinámico) con altura limitada */}
+        <div className="bg-white rounded-xl p-6 shadow flex flex-col h-50">
+          {" "}
+          {/* Altura fija de 320px (20rem) */}
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium text-gray-900">
+              Cambios Recientes
+            </h3>
+            <button
+              onClick={() => refetch()}
+              className="text-sm font-medium text-blue-600 hover:text-blue-800"
+              disabled={isFetching}
+            >
+              {isFetching ? "Actualizando…" : "Actualizar"}
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {" "}
+            {/* Contenedor con scroll */}
+            {isLoading ? (
+              <ul className="space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <li
+                    key={i}
+                    className="animate-pulse h-10 bg-gray-100 rounded"
+                  />
+                ))}
+              </ul>
+            ) : isError ? (
+              <p className="text-sm text-red-600">
+                No se pudo cargar la actividad. Intenta de nuevo.
+              </p>
+            ) : items.length === 0 ? (
+              <p className="text-sm text-gray-500">
+                Aún no hay cambios registrados.
+              </p>
+            ) : (
+              <ul className="divide-y divide-gray-200">
+                {items.map((item) => (
+                  <li key={item._id} className="py-2 flex items-center">
+                    <div className="bg-gray-100 p-2 rounded-lg mr-3">
+                      <CogIcon className="h-5 w-5 text-gray-500" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {item.action}
+                      </p>
+                      <p className="text-sm text-gray-500 truncate">
+                        {item.category} — por {item.userName || "Sistema"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">
+                        {timeAgo(item.createdAt)}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       </div>
 
+      {/* Secciones de Configuración */}
       <div>
         <h2 className="text-xl font-bold text-gray-900 mb-6">
           Secciones de Configuración

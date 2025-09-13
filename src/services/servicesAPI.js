@@ -6,7 +6,7 @@ const normalizeDurationUnitForAPI = (u) => {
   const v = String(u || "").toLowerCase();
   if (["min", "minute", "minutes", "minutos", "m", "min."].includes(v))
     return "minutes";
-  if (["h", "hora", "horas", "hour", "hours"].includes(v)) return "hours";
+  if (["h", "hora", "hour", "hours"].includes(v)) return "houras";
   return "minutes";
 };
 

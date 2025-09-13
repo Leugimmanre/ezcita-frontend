@@ -25,9 +25,7 @@ const SettingsServiceItems = ({ service, onEdit, onDelete }) => {
   // Formatear duración
   const formatDuration = (duration, unit) => {
     const totalMinutes =
-      unit === "horas" || unit === "hours"
-        ? Number(duration) * 60
-        : Number(duration);
+      unit === "horas" ? Number(duration) * 60 : Number(duration);
 
     const h = Math.floor(totalMinutes / 60);
     const m = totalMinutes % 60;

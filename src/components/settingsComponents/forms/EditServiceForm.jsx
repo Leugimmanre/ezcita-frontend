@@ -16,7 +16,7 @@ import { toast } from "react-toastify";
 export default function EditServiceForm({ service, onSuccess, onError }) {
   const normalizeToAPIUnit = (u) => {
     const v = String(u || "").toLowerCase();
-    if (["hour", "hours", "hora", "horas"].includes(v)) return "hours";
+    if (["hour", "hours", "hora"].includes(v)) return "horas";
     return "minutes";
   };
 
