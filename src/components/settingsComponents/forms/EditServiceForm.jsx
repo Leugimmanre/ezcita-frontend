@@ -14,6 +14,12 @@ import Select from "@/components/ui/Select";
 import { toast } from "react-toastify";
 
 export default function EditServiceForm({ service, onSuccess, onError }) {
+  const normalizeToAPIUnit = (u) => {
+    const v = String(u || "").toLowerCase();
+    if (["hour", "hours", "hora", "horas"].includes(v)) return "hours";
+    return "minutes";
+  };
+
   const {
     register,
     handleSubmit,
@@ -25,7 +31,7 @@ export default function EditServiceForm({ service, onSuccess, onError }) {
       category: service.category,
       description: service.description,
       duration: service.duration,
-      durationUnit: service.durationUnit,
+      durationUnit: normalizeToAPIUnit(service.durationUnit),
     },
   });
 
@@ -199,7 +205,7 @@ export default function EditServiceForm({ service, onSuccess, onError }) {
             label="Unidad"
             {...register("durationUnit")}
             options={[
-              { value: "min.", label: "minutos" },
+              { value: "minutes", label: "minutos" },
               { value: "horas", label: "horas" },
             ]}
           />

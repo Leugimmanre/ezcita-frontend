@@ -1,6 +1,27 @@
 // src/services/servicesAPI.js
 import api from "@/lib/axios.js";
 
+// Normaliza a lo que espera el backend
+const normalizeDurationUnitForAPI = (u) => {
+  const v = String(u || "").toLowerCase();
+  if (["min", "minute", "minutes", "minutos", "m", "min."].includes(v))
+    return "minutes";
+  if (["h", "hora", "horas", "hour", "hours"].includes(v)) return "hours";
+  return "minutes";
+};
+
+// Crear un nuevo servicio
+export const createService = async (data) => {
+  const payload = {
+    ...data,
+    price: Number(data.price) || 0,
+    duration: Number(data.duration) || 0,
+    durationUnit: normalizeDurationUnitForAPI(data.durationUnit),
+  };
+  const { data: res } = await api.post("/services", payload);
+  return res;
+};
+
 // Obtener todos los servicios
 export const getServices = async () => {
   const { data } = await api.get("/services");
@@ -14,16 +35,16 @@ export const getServiceById = async (id) => {
   return data?.data ?? data;
 };
 
-// Crear un nuevo servicio
-export const createService = async (payload) => {
-  const { data } = await api.post("/services", payload);
-  return data?.data ?? data;
-};
-
 // Actualizar un servicio por ID
-export const updateService = async (id, payload) => {
-  const { data } = await api.put(`/services/${id}`, payload);
-  return data?.data ?? data;
+export const updateService = async (id, data) => {
+  const payload = {
+    ...data,
+    price: Number(data.price) || 0,
+    duration: Number(data.duration) || 0,
+    durationUnit: normalizeDurationUnitForAPI(data.durationUnit),
+  };
+  const { data: res } = await api.put(`/services/${id}`, payload);
+  return res;
 };
 
 // Eliminar un servicio por ID

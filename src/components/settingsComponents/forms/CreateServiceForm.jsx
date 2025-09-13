@@ -27,7 +27,7 @@ export default function CreateServiceForm({ onSuccess }) {
       description: "",
       price: "",
       duration: "",
-      durationUnit: "min.",
+      durationUnit: "minutes",
     },
   });
 
@@ -174,14 +174,14 @@ export default function CreateServiceForm({ onSuccess }) {
             label="Unidad"
             {...register("durationUnit")}
             options={[
-              { value: "min.", label: "minutos" },
+              { value: "minutes", label: "minutos" },
               { value: "horas", label: "horas" },
             ]}
           />
         </div>
       </div>
 
-      {/* 🖼️ Bloque NUEVO: subir imágenes opcionales */}
+      {/* Subir imágenes opcionales */}
       <div className="space-y-2">
         <label className="block text-sm font-medium text-gray-700">
           Imágenes del servicio (opcional)
