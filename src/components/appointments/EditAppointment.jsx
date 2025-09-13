@@ -1,8 +1,8 @@
 // src/components/appointments/EditAppointment.jsx
 import { useNavigate, useParams } from "react-router-dom";
-import { useAppointmentSettings } from "@/hooks/useAppointmentSettings";
-import Appointment from "@/components/appointments/Appointment";
 import { useEffect, useState } from "react";
+import Appointment from "@/components/appointments/Appointment";
+import { useAppointmentSettings } from "@/hooks/useAppointmentSettings";
 import {
   getAppointmentById,
   updateAppointment,
@@ -12,34 +12,45 @@ import {
 export default function EditAppointment() {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [appointmentToEdit, setAppointmentToEdit] = useState(null);
   const [allAppointments, setAllAppointments] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+
   const { data: settings } = useAppointmentSettings();
 
   useEffect(() => {
+    let mounted = true;
+
     const fetchData = async () => {
       try {
-        // 1) Cargar la cita
+        // Cita a editar
         const apptResp = await getAppointmentById(id);
         const appt = apptResp?.data || apptResp;
-        setAppointmentToEdit(appt);
+        if (mounted) setAppointmentToEdit(appt);
 
-        // 2) Cargar todas las citas para cálculo de solapes
-        const appointmentsList = await getAppointments();
-        setAllAppointments(appointmentsList);
-      } catch (error) {
-        console.error("Error al cargar la cita:", error);
-        navigate("/appointments/my-appointments");
+        // Todas las citas (para solapes en el hijo)
+        const list = await getAppointments();
+        if (mounted) setAllAppointments(list);
+      } catch (err) {
+        console.error("Error al cargar la cita:", err);
+        navigate("/appointments/my-appointments", { replace: true });
       } finally {
-        setIsLoading(false);
+        if (mounted) setLoading(false);
       }
     };
 
     fetchData();
+    return () => {
+      mounted = false;
+    };
   }, [id, navigate]);
 
-  // Maneja la actualización de la cita
+  const handleBack = () => {
+    navigate("/appointments/my-appointments");
+  };
+
+  // El hijo (Appointment) nos devuelve { date, services, duration }
   const handleSave = async ({ date, services, duration }) => {
     try {
       await updateAppointment(id, {
@@ -49,20 +60,17 @@ export default function EditAppointment() {
       });
       navigate("/appointments/my-appointments", {
         state: { message: "Cita actualizada correctamente" },
+        replace: true,
       });
-    } catch (error) {
-      console.error("Error al actualizar la cita:", error);
+    } catch (err) {
+      console.error("Error al actualizar la cita:", err);
     }
   };
 
-  const handleBack = () => {
-    navigate("/appointments/my-appointments");
-  };
-
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500" />
       </div>
     );
   }
@@ -74,19 +82,19 @@ export default function EditAppointment() {
   return (
     <div className="max-w-4xl mx-auto p-4">
       <Appointment
+        isEditing
         appointmentToEdit={appointmentToEdit}
         onBack={handleBack}
         onConfirm={handleSave}
-        startHour={settings.startHour}
-        endHour={settings.endHour}
-        interval={settings.interval}
-        lunchStart={settings.lunchStart}
-        lunchEnd={settings.lunchEnd}
-        maxMonthsAhead={settings.maxMonthsAhead}
-        workingDays={settings.workingDays}
-        staffCount={settings.staffCount}
+        startHour={settings?.startHour}
+        endHour={settings?.endHour}
+        interval={settings?.interval}
+        lunchStart={settings?.lunchStart}
+        lunchEnd={settings?.lunchEnd}
+        maxMonthsAhead={settings?.maxMonthsAhead}
+        workingDays={settings?.workingDays}
+        staffCount={settings?.staffCount}
         appointments={allAppointments}
-        isEditing={true}
       />
     </div>
   );
