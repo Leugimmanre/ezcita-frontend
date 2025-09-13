@@ -13,6 +13,7 @@ import {
   completeAppointment,
   deleteAppointment,
   getAppointments2,
+  getAvailability,
   updateAppointment,
 } from "@/services/appointmentsAPI";
 import { generateTimeSlots } from "@/utils/generateTimeSlots";
@@ -25,18 +26,20 @@ const normalize = (s) =>
     .replace(/\p{Diacritic}/gu, "")
     .toLowerCase();
 
+// Helper: duración a minutos (respeta "horas")
+function toMinutes(d, u) {
+  const n = Number(d) || 0;
+  return String(u || "").toLowerCase() === "horas" ? n * 60 : n;
+}
+
+// Helper: suma minutos a Date
 function addMinutes(date, min) {
   const d = new Date(date);
   d.setMinutes(d.getMinutes() + min);
   return d;
 }
-function dayBoundsISO(date) {
-  const d0 = new Date(date);
-  d0.setHours(0, 0, 0, 0);
-  const d1 = new Date(date);
-  d1.setHours(23, 59, 59, 999);
-  return { start: d0.toISOString(), end: d1.toISOString() };
-}
+
+// Helper: extrae hora+min en decimal (9:30 => 9.5)
 function hourMinOf(date) {
   return date.getHours() + date.getMinutes() / 60;
 }
@@ -53,6 +56,8 @@ function fitsBlock(date, durationMin, lunchStart, lunchEnd, endHour) {
   const fullyAfternoon = startHM >= lunchEnd;
   return (fullyMorning || fullyAfternoon) && !crossesLunch;
 }
+
+// Helper: formatea fecha a "yyyy-mm-dd"
 function yyyy_mm_dd(date) {
   const d = new Date(date);
   const pad = (n) => String(n).padStart(2, "0");
@@ -101,30 +106,25 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [isOpen, onClose]);
 
-  // Citas del día (para detectar solapes)
-  const { start, end } = dayBoundsISO(selectedDate);
-  const { data: dayData } = useQuery({
-    queryKey: ["admin-appointments-day", start, end],
-    queryFn: () =>
-      getAppointments2({
-        page: 1,
-        limit: 500,
-        startDate: start,
-        endDate: end,
-      }),
-    enabled: isOpen && !!settings,
+  const excludeId = mode === "edit" ? initial?._id : undefined;
+  const availDateStr = yyyy_mm_dd(selectedDate);
+
+  const { data: availabilityData, isFetching: loadingAvail } = useQuery({
+    queryKey: ["admin-availability", availDateStr, excludeId],
+    enabled: isOpen && !!settings && !!availDateStr,
+    queryFn: () => getAvailability(availDateStr, excludeId),
   });
-  const dayAppointments = dayData?.appointments ?? [];
-  const staffCount = settings?.staffCount ?? 1;
+  const busy = availabilityData?.busy || [];
 
   // Inicializar modal
   useEffect(() => {
     if (!isOpen) return;
+
     if (mode === "edit" && initial) {
-      setSelectedUser(initial.user || null);
-      setSelectedServices(initial.services || []);
+      setSelectedUser(initial.user || null); // si en edición quieres mostrarlo (aunque sea solo lectura)
       setStatus(initial.status || "pending");
       setNotes(initial.notes || "");
+
       const d = new Date(initial.date);
       setSelectedDate(d);
       setSelectedTime(
@@ -137,14 +137,31 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
       setSelectedServices([]);
       setStatus("pending");
       setNotes("");
+
       const n = new Date();
       n.setMinutes(0, 0, 0);
       setSelectedDate(n);
       setSelectedTime("");
+
       setUserQuery("");
       setUserOptions([]);
     }
   }, [isOpen, mode, initial]);
+
+  // Mapear servicios iniciales en edición
+  useEffect(() => {
+    if (!isOpen) return;
+    if (mode !== "edit" || !initial) return;
+    if (!Array.isArray(servicesList) || servicesList.length === 0) return;
+
+    const mapped = (initial.services || [])
+      .map((s) =>
+        typeof s === "string" ? servicesList.find((x) => x._id === s) : s
+      )
+      .filter(Boolean);
+
+    setSelectedServices(mapped);
+  }, [isOpen, mode, initial, servicesList]);
 
   // Buscar usuarios (insensible a tildes en el cliente)
   useEffect(() => {
@@ -185,7 +202,7 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
   // Totales
   const totals = useMemo(() => {
     const duration = selectedServices.reduce(
-      (s, x) => s + Number(x?.duration || 0),
+      (s, x) => s + toMinutes(x?.duration, x?.durationUnit),
       0
     );
     const price = selectedServices.reduce(
@@ -205,42 +222,45 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
     );
   }, [settings]);
 
+  // Evitar solapamiento con el mismo (en edición)
+  const staffCount = Number(settings?.staffCount) || 1;
+
   // Reglas de disponibilidad
-  const isSlotDisabled = (hhmm) => {
-    if (!settings) return true;
+  const getSlotDisableInfo = (hhmm) => {
+    if (!settings) return { disabled: true, reason: "no-settings" };
+
     const [h, m] = hhmm.split(":").map(Number);
     const candidate = new Date(selectedDate);
     candidate.setHours(h, m, 0, 0);
 
-    // Día laborable
-    if (!settings.workingDays?.includes(candidate.getDay())) return true;
-    // Pasado
-    if (candidate < new Date()) return true;
-    // Bloque: no cruzar comida / fin jornada
-    const okBlock = fitsBlock(
+    // Reglas básicas
+    if (!settings.workingDays?.includes(candidate.getDay()))
+      return { disabled: true, reason: "non-working-day" };
+    if (candidate < new Date()) return { disabled: true, reason: "past" };
+    if (!selectedServices.length)
+      return { disabled: true, reason: "no-services" };
+
+    // No cruzar comida / fin jornada
+    const fits = fitsBlock(
       candidate,
       totals.duration,
       settings.lunchStart,
       settings.lunchEnd,
       settings.endHour
     );
-    if (!okBlock) return true;
+    if (!fits) return { disabled: true, reason: "out-of-block" };
 
-    // Capacidad: solapes
-    const end = addMinutes(candidate, totals.duration);
-    const overlapping = dayAppointments.filter((a) => {
-      if (!["pending", "confirmed"].includes(a.status)) return false;
-      if (initial?._id && a._id === initial._id) return false;
-      const aStart = new Date(a.date);
-      const aEnd = addMinutes(aStart, a.duration);
-      return aStart < end && aEnd > candidate;
+    // Capacidad / solapes usando disponibilidad del backend
+    const candidateEnd = addMinutes(candidate, totals.duration);
+    const overlapping = busy.filter((b) => {
+      const bStart = new Date(b.start);
+      const bEnd = addMinutes(bStart, Number(b.duration) || 0);
+      return bStart < candidateEnd && bEnd > candidate;
     }).length;
 
-    return (
-      overlapping >= staffCount ||
-      totals.duration <= 0 ||
-      !selectedServices.length
-    );
+    if (overlapping >= staffCount) return { disabled: true, reason: "busy" };
+
+    return { disabled: false, reason: null };
   };
 
   // Mutations
@@ -250,6 +270,7 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
       toast.success("Cita creada");
       queryClient.invalidateQueries(["admin-appointments"]);
       queryClient.invalidateQueries(["admin-appointments-day"]);
+      queryClient.invalidateQueries(["admin-availability"]);
       onSuccess?.(res);
       onClose();
     },
@@ -263,6 +284,7 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
       toast.success("Cita actualizada");
       queryClient.invalidateQueries(["admin-appointments"]);
       queryClient.invalidateQueries(["admin-appointments-day"]);
+      queryClient.invalidateQueries(["admin-availability"]);
       onSuccess?.(res);
       onClose();
     },
@@ -514,22 +536,45 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
                 <div className="max-h-40 overflow-y-auto p-1 border rounded-lg">
                   <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
                     {slots.map((hhmm) => {
-                      const disabled = isSlotDisabled(hhmm);
+                      const { disabled, reason } = loadingAvail
+                        ? { disabled: true, reason: "loading" }
+                        : getSlotDisableInfo(hhmm);
+
                       const cls =
                         "text-center text-xs font-medium p-2 rounded-lg transition " +
                         (selectedTime === hhmm
-                          ? "bg-indigo-600 text-white ring-1 ring-indigo-300"
-                          : "bg-gray-100 text-gray-800 hover:bg-gray-200") +
+                          ? "bg-indigo-600 text-white ring-1 ring-indigo-300 "
+                          : "bg-gray-100 text-gray-800 ") +
                         (disabled
-                          ? " opacity-40 cursor-not-allowed"
-                          : " cursor-pointer");
+                          ? "opacity-40 cursor-not-allowed pointer-events-none "
+                          : "hover:bg-gray-200 cursor-pointer ");
+
                       return (
                         <button
                           key={hhmm}
                           type="button"
                           disabled={disabled}
                           className={cls}
-                          onClick={() => !disabled && setSelectedTime(hhmm)}
+                          onClick={() => {
+                            // por si quitas pointer-events-none en el futuro
+                            if (disabled) {
+                              const msg =
+                                reason === "busy"
+                                  ? "Franja ocupada"
+                                  : reason === "past"
+                                  ? "Hora en el pasado"
+                                  : reason === "non-working-day"
+                                  ? "Día no laborable"
+                                  : reason === "out-of-block"
+                                  ? "No cabe dentro de la jornada/pausa"
+                                  : reason === "no-services"
+                                  ? "Selecciona al menos un servicio"
+                                  : "Franja no disponible";
+                              toast.info(msg);
+                              return;
+                            }
+                            setSelectedTime(hhmm);
+                          }}
                         >
                           {hhmm}
                         </button>

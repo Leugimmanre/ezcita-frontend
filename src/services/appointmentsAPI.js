@@ -100,9 +100,9 @@ export const deleteAppointment = async (id) => {
 };
 
 // Obtener disponibilidad diaria del tenant
-export const getAvailability = async (isoDateStrYYYYMMDD) => {
+export const getAvailability = async (date, excludeId) => {
   const { data } = await api.get(`/appointments/availability`, {
-    params: { date: isoDateStrYYYYMMDD },
+    params: excludeId ? { date, excludeId } : { date },
   });
   return data;
 };
