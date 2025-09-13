@@ -1,10 +1,29 @@
 // src/services/appointmentsAPI.js
 import api from "@/lib/axios";
 
+// Helper para convertir duración a minutos
+const toISO = (value) => {
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) throw new Error("Fecha inválida");
+  return d.toISOString();
+};
+
 // Crear cita
-export const createAppointment = async (data) => {
-  const res = await api.post("/appointments", data);
-  return res.data;
+export const createAppointment = async ({
+  services,
+  date,
+  duration,
+  notes = "",
+}) => {
+  const payload = {
+    services,
+    date: toISO(date),
+    notes,
+  };
+  if (duration != null) payload.duration = Number(duration) || 0;
+
+  const { data } = await api.post("/appointments", payload);
+  return data;
 };
 
 // Obtener citas del usuario autenticado
@@ -78,4 +97,12 @@ export const completeAppointment = async (id) => {
 export const deleteAppointment = async (id) => {
   const res = await api.delete(`/appointments/${id}`);
   return res.data;
+};
+
+// Obtener disponibilidad diaria del tenant
+export const getAvailability = async (isoDateStrYYYYMMDD) => {
+  const { data } = await api.get(`/appointments/availability`, {
+    params: { date: isoDateStrYYYYMMDD },
+  });
+  return data;
 };

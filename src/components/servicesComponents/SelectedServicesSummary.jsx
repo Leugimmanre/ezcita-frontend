@@ -11,12 +11,34 @@ export default function SelectedServicesSummary({
   formatCurrency,
   formatDuration,
 }) {
+  const toNumber = (v) => {
+    if (typeof v === "number") return v;
+    const n = Number(
+      String(v)
+        .replace(",", ".")
+        .replace(/[^\d.]/g, "")
+    );
+    return Number.isNaN(n) ? 0 : n;
+  };
+  const toMinutes = (d, u) => {
+    const n = toNumber(d);
+    return (u ?? "").toLowerCase() === "horas"
+      ? Math.round(n * 60)
+      : Math.round(n);
+  };
+  const formatTotalMinutes = (mins) => {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    if (h === 0) return `${m} min`;
+    if (m === 0) return `${h}h`;
+    return `${h}h ${m}min`;
+  };
   const totalPrice = selectedServices.reduce(
-    (sum, service) => sum + service.price,
+    (sum, s) => sum + toNumber(s.price),
     0
   );
-  const totalDuration = selectedServices.reduce(
-    (sum, service) => sum + service.duration,
+  const totalDurationMins = selectedServices.reduce(
+    (sum, s) => sum + toMinutes(s.duration, s.durationUnit),
     0
   );
 
@@ -94,7 +116,7 @@ export default function SelectedServicesSummary({
         <div className="flex justify-between text-sm mb-6">
           <span className={totalLabelClass}>Duración total:</span>
           <span className={totalLabelClass}>
-            {formatDuration(totalDuration, "min.")}
+            {formatTotalMinutes(totalDurationMins)}
           </span>
         </div>
 

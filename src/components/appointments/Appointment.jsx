@@ -11,6 +11,7 @@ import { useAppointmentContext } from "@/contexts/useAppointmentContext";
 import { useQuery } from "@tanstack/react-query";
 import { getServices } from "@/services/servicesAPI";
 import { toast } from "react-toastify";
+import { useAvailability } from "@/hooks/useAvailability";
 
 // Registrar el locale en español
 registerLocale("es", es);
@@ -39,6 +40,7 @@ export default function Appointment({
     return nextHour;
   });
   const { staffCount } = useAppointmentContext();
+  const capacity = Number(staffCount) || 1;
 
   // Traer servicios
   const { data: allServices = [] } = useQuery({
@@ -64,9 +66,38 @@ export default function Appointment({
   }, [isEditing, appointmentToEdit, setSelectedServices]);
 
   // Totales
-  const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
+  const totalPrice = selectedServices.reduce(
+    (sum, s) => sum + Number(s.price ?? 0),
+    0
+  );
+  // helpers para formatear duración
+  const toMinutes = (duration, unit) => {
+    const n = Number(duration);
+    if (Number.isNaN(n)) return 0;
+    return (unit ?? "").toLowerCase() === "horas"
+      ? Math.round(n * 60)
+      : Math.round(n);
+  };
+
+  const formatServiceDuration = (duration, unit) => {
+    const total = toMinutes(duration, unit);
+    const h = Math.floor(total / 60);
+    const m = total % 60;
+    if (h === 0) return `${m} min`;
+    if (m === 0) return `${h}h`;
+    return `${h}h ${m}min`;
+  };
+
+  const formatTotalMinutes = (mins) => {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    if (h === 0) return `${m} min`;
+    if (m === 0) return `${h}h`;
+    return `${h}h ${m}min`;
+  };
+
   const totalDuration = selectedServices.reduce(
-    (sum, s) => sum + s.duration,
+    (sum, s) => sum + toMinutes(s.duration, s.durationUnit),
     0
   );
   const maxServices = MAX_SERVICES_SELECTION;
@@ -89,21 +120,42 @@ export default function Appointment({
     }
     e.target.value = "";
   };
+
+  const excludeId = isEditing ? appointmentToEdit?._id : undefined;
+  const { data: busy = [], isLoading: loadingBusy } = useAvailability(
+    selectedDate,
+    excludeId
+  );
+
   const handleClearSelection = () => setSelectedServices([]);
   const handleConfirm = () => {
     if (!canConfirm) return;
     const [hour, minute] = selectedTime.split(":").map(Number);
     const finalDate = new Date(selectedDate);
     finalDate.setHours(hour, minute, 0, 0);
-    if (isEditing) {
-      onConfirm({
-        date: finalDate,
-        services: selectedServices.map((s) => s._id),
-        duration: totalDuration,
-      });
-    } else {
-      onConfirm(finalDate);
+    const finalEnd = new Date(finalDate);
+    finalEnd.setMinutes(finalEnd.getMinutes() + totalDuration);
+    const overlaps =
+      appointments?.filter((appt) => {
+        if (!["pending", "confirmed"].includes(appt.status)) return false;
+        if (appt._id === appointmentToEdit?._id) return false; // si estás editando
+        const apptStart = new Date(appt.date);
+        const apptEnd = new Date(apptStart);
+        apptEnd.setMinutes(apptEnd.getMinutes() + appt.duration);
+        return apptStart < finalEnd && apptEnd > finalDate;
+      }).length || 0;
+
+    if (overlaps >= capacity) {
+      toast.error(
+        "No hay personal disponible para esa franja horaria. Elige otra hora."
+      );
+      return;
     }
+    onConfirm({
+      date: finalDate,
+      services: selectedServices.map((s) => s._id),
+      duration: totalDuration,
+    });
   };
   const handleDateChange = (date) => {
     setSelectedDate(date);
@@ -206,6 +258,14 @@ export default function Appointment({
     "bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white";
   const confirmBtnDisabled =
     "bg-gray-500 opacity-50 cursor-not-allowed text-white";
+
+  {
+    loadingBusy && (
+      <p className="text-sm text-[var(--color-muted)] mt-2">
+        Cargando disponibilidad...
+      </p>
+    );
+  }
 
   return (
     <div className="mt-10 max-w-6xl mx-auto">
@@ -310,7 +370,10 @@ export default function Appointment({
                       {service.name}
                     </p>
                     <p className={durationTextClasses}>
-                      {service.duration} min.
+                      {formatServiceDuration(
+                        service.duration,
+                        service.durationUnit
+                      )}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
@@ -350,7 +413,9 @@ export default function Appointment({
           <div className={totalsRow}>
             <div>
               <p className={totalsLabel}>Duración total:</p>
-              <p className={totalsValueLeft}>{totalDuration} min.</p>
+              <p className={totalsValueLeft}>
+                {formatTotalMinutes(totalDuration)}
+              </p>
             </div>
             <div className="text-right">
               <p className={totalsLabel}>Precio total:</p>
@@ -399,17 +464,17 @@ export default function Appointment({
                       selectedEnd.getMinutes() + totalDuration
                     );
 
-                    const overlappingCount = appointments?.filter((appt) => {
-                      if (!["pending", "confirmed"].includes(appt.status))
-                        return false;
-                      if (appt._id === appointmentToEdit?._id) return false;
-                      const apptStart = new Date(appt.date);
+                    const overlappingCount = busy.filter((b) => {
+                      const apptStart = new Date(b.start);
                       const apptEnd = new Date(apptStart);
-                      apptEnd.setMinutes(apptEnd.getMinutes() + appt.duration);
+                      apptEnd.setMinutes(
+                        apptEnd.getMinutes() + (b.duration || 0)
+                      );
                       return apptStart < selectedEnd && apptEnd > dateWithTime;
                     }).length;
 
-                    const isBooked = overlappingCount >= staffCount;
+                    const isBooked = overlappingCount >= capacity;
+
                     const isWorkingDay = workingDays.includes(
                       selectedDate.getDay()
                     );
@@ -435,9 +500,22 @@ export default function Appointment({
                     return (
                       <button
                         key={hour}
-                        onClick={() => setSelectedTime(hour)}
-                        disabled={disabled}
-                        className={classes}
+                        onClick={() => {
+                          if (disabled) {
+                            toast.info(
+                              isBooked
+                                ? "Franja ocupada. Elige otra hora."
+                                : "Hora no disponible."
+                            );
+                            return;
+                          }
+                          setSelectedTime(hour);
+                        }}
+                        className={
+                          classes + (disabled ? " pointer-events-auto" : "")
+                        }
+                        aria-disabled={disabled}
+                        title={isBooked ? "Franja ocupada" : undefined}
                       >
                         {hour}
                       </button>

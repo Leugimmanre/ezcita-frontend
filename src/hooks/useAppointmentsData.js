@@ -1,48 +1,71 @@
 // src/hooks/useAppointmentsData.js
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  createAppointment,
-  getAppointments,
+  createAppointment as createAppointmentAPI,
+  getAppointments as getAppointmentsAPI,
   getAppointmentById,
-  updateAppointment,
-  cancelAppointment,
+  updateAppointment as updateAppointmentAPI,
+  cancelAppointment as cancelAppointmentAPI,
 } from "@/services/appointmentsAPI";
 
 export function useAppointmentsData(filters = {}) {
   const queryClient = useQueryClient();
 
-  const { data: appointments = [], isLoading } = useQuery({
+  // Trae la lista y normaliza la respuesta (array o { appointments: [] })
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ["appointments", filters],
-    queryFn: () => getAppointments(filters),
+    queryFn: () => getAppointmentsAPI(filters),
   });
 
+  const appointments = Array.isArray(data) ? data : data?.appointments ?? [];
+
+  // Crear
   const createMutation = useMutation({
-    mutationFn: createAppointment,
-    onSuccess: () => queryClient.invalidateQueries(["appointments"]),
+    mutationFn: createAppointmentAPI,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+    },
   });
 
+  // Cancelar
   const cancelMutation = useMutation({
-    mutationFn: cancelAppointment,
-    onSuccess: () => queryClient.invalidateQueries(["appointments"]),
+    mutationFn: cancelAppointmentAPI, // debe aceptar (id)
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+    },
   });
 
-  // Nueva mutación para actualizar citas
+  // Actualizar
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => updateAppointment(id, data),
-    onSuccess: () => queryClient.invalidateQueries(["appointments"]),
+    mutationFn: ({ id, data }) => updateAppointmentAPI(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+    },
   });
 
-  // Nueva función para obtener una cita por ID
-  const getAppointment = async (id) => {
-    return getAppointmentById(id);
-  };
+  // Obtener una cita por ID (lectura puntual)
+  const getAppointment = async (id) => getAppointmentById(id);
 
   return {
+    // datos
     appointments,
     isLoading,
-    createAppointment: createMutation.mutate,
-    cancelAppointment: cancelMutation.mutate,
-    updateAppointment: updateMutation.mutate,
+    isError,
+    error,
+
+    // crear
+    createAppointment: (vars, options) => createMutation.mutate(vars, options),
+    createAppointmentAsync: createMutation.mutateAsync,
+
+    // cancelar
+    cancelAppointment: (id, options) => cancelMutation.mutate(id, options),
+    cancelAppointmentAsync: cancelMutation.mutateAsync,
+
+    // actualizar
+    updateAppointment: (vars, options) => updateMutation.mutate(vars, options),
+    updateAppointmentAsync: updateMutation.mutateAsync,
+
+    // lectura puntual
     getAppointment,
   };
 }

@@ -12,7 +12,30 @@ export default function MyAppointments() {
   // Navegación
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-// Maneja la cancelación de una cita
+
+  const toMinutes = (d, u) => {
+    const n = Number(d);
+    if (!Number.isFinite(n)) return 0;
+    const unit = String(u || "")
+      .trim()
+      .toLowerCase();
+    return unit === "horas" ? n * 60 : n;
+  };
+
+  const formatTotalMinutes = (mins) => {
+    const m = Math.max(0, Number(mins) || 0);
+    const h = Math.floor(m / 60);
+    const r = m % 60;
+    if (h === 0) return `${r} min`;
+    if (r === 0) return `${h}h`;
+    return `${h}h ${r}min`;
+  };
+
+  // Formatear duración del servicio
+  const formatServiceDuration = (duration, unit) =>
+    formatTotalMinutes(toMinutes(duration, unit));
+
+  // Maneja la cancelación de una cita
   const handleCancel = async (id) => {
     setCancellingId(id);
     try {
@@ -34,7 +57,7 @@ export default function MyAppointments() {
       toast.error("Error al reactivar la cita");
     }
   };
-// Navega a la edición de una cita
+  // Navega a la edición de una cita
   const handleEditClick = (apptId) => {
     navigate(`/appointments/edit/${apptId}`);
   };
@@ -81,7 +104,7 @@ export default function MyAppointments() {
     "font-medium text-[var(--color-text)] dark:text-white";
 
   const durationPriceClass =
-    "text-sm text-[var(--color-muted)] dark:text-blue-300";
+    "text-bold text-[var(--color-muted)] dark:text-blue-300";
 
   const totalLabelClass =
     "text-sm text-[var(--color-muted)] dark:text-blue-300";
@@ -171,7 +194,10 @@ export default function MyAppointments() {
                           </span>
                           <div className="flex gap-4">
                             <span className={durationPriceClass}>
-                              {service.duration} min.
+                              {formatServiceDuration(
+                                service.duration,
+                                service.durationUnit
+                              )}
                             </span>
                             <span className="font-bold text-[var(--color-text)] dark:text-blue-300">
                               {service.price}€
@@ -184,8 +210,14 @@ export default function MyAppointments() {
                     <div className={`${dividerClass} flex justify-between`}>
                       <span className={totalLabelClass}>Duración total:</span>
                       <span className={totalValueClass}>
-                        {appt.services.reduce((sum, s) => sum + s.duration, 0)}{" "}
-                        min.
+                        {formatTotalMinutes(
+                          appt?.duration ??
+                            appt.services.reduce(
+                              (sum, s) =>
+                                sum + toMinutes(s.duration, s.durationUnit),
+                              0
+                            )
+                        )}
                       </span>
                     </div>
                     <div className="flex justify-between">

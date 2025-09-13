@@ -1,18 +1,19 @@
 // src/views/servicesViews/AppointmentView.jsx
 import { useNavigate } from "react-router-dom";
-import { MAX_SERVICES_SELECTION } from "@/data/index";
-import Appointment from "@/components/servicesComponents/Appointment"; // Asegúrate de que este path es el del Appointment que editaste
+import { MAX_SERVICES_SELECTION, APP_NAME } from "@/data/index";
+import Appointment from "@/components/servicesComponents/Appointment";
 import { useAppointment } from "@/hooks/useAppointment";
 import { useEffect } from "react";
 import { useAppointmentSettings } from "@/hooks/useAppointmentSettings";
 import { useDocumentTitle } from "@/hooks/title";
-import { APP_NAME } from "@/data/index";
 import { useBrandName } from "@/hooks/useBrandName";
 import { useAppointmentsData } from "@/hooks/useAppointmentsData";
+import { toast } from "react-toastify";
 
 export default function AppointmentView() {
   const { brandName } = useBrandName(APP_NAME);
   useDocumentTitle(`Nueva Cita | ${brandName}`);
+
   const navigate = useNavigate();
   const { selectedServices, setSelectedServices } = useAppointment();
   const { data: settings, isLoading } = useAppointmentSettings();
@@ -25,35 +26,44 @@ export default function AppointmentView() {
     }
   }, [selectedServices, navigate]);
 
-  const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
-  const totalDuration = selectedServices.reduce(
-    (sum, s) => sum + s.duration,
+  const totalPrice = selectedServices.reduce(
+    (sum, s) => sum + Number(s.price ?? 0),
     0
   );
+  const totalDuration = selectedServices.reduce((sum, s) => {
+    const n = Number(s.duration) || 0;
+    const mins = s.durationUnit?.toLowerCase() === "horas" ? n * 60 : n;
+    return sum + mins;
+  }, 0);
 
-  // ✅ Handler robusto: acepta Date o { date, services, duration }
-  const handleConfirmAppointment = (payload) => {
+  // Confirmar cita
+  const handleConfirmAppointment = (payloadOrDate) => {
     let date;
     let services;
 
-    if (payload instanceof Date) {
-      // Versión antigua: el hijo enviaba un Date
-      date = payload;
+    if (payloadOrDate instanceof Date) {
+      date = payloadOrDate;
       services = selectedServices.map((s) => s._id);
-    } else if (payload && typeof payload === "object") {
-      // Versión nueva: el hijo envía { date, services, duration }
-      date = payload.date;
-      services = payload.services;
+    } else if (payloadOrDate && typeof payloadOrDate === "object") {
+      date = payloadOrDate.date;
+      services = payloadOrDate.services;
     } else {
-      console.error("Payload inválido recibido en onConfirm:", payload);
+      toast.error("Datos de la cita inválidos");
       return;
     }
 
-    // Normaliza fecha a ISO
-    const isoDate =
-      date instanceof Date ? date.toISOString() : new Date(date).toISOString();
+    const duration =
+      payloadOrDate && payloadOrDate.duration != null
+        ? Number(payloadOrDate.duration) || 0
+        : totalDuration;
 
-    // Normaliza services a IDs (fallback al estado global si no vienen)
+    // Valida y normaliza a Date
+    const dateObj = date instanceof Date ? date : new Date(date);
+    if (Number.isNaN(dateObj.getTime())) {
+      toast.error("Fecha inválida");
+      return;
+    }
+
     const serviceIds =
       Array.isArray(services) && services.length > 0
         ? services
@@ -62,14 +72,22 @@ export default function AppointmentView() {
     createAppointment(
       {
         services: serviceIds,
-        date: isoDate,
+        date: dateObj,
+        duration,
         notes: "",
-        // duration: payload?.duration, // Descomenta si tu backend lo guarda en creación
       },
       {
         onSuccess: () => {
+          toast.success("Cita creada exitosamente");
           setSelectedServices([]);
           navigate("/appointments/my-appointments");
+        },
+        onError: (err) => {
+          const msg =
+            err?.response?.data?.error ||
+            err?.message ||
+            "No se pudo crear la cita";
+          toast.error(msg);
         },
       }
     );

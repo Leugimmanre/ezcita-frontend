@@ -7,13 +7,17 @@ import { formatCurrency } from "@/helpers/helpers";
 const SettingsServiceItems = ({ service, onEdit, onDelete }) => {
   // Formatear duración
   const formatDuration = (duration, unit) => {
-    if (unit === "horas") {
-      const hours = Math.floor(duration / 60);
-      const minutes = duration % 60;
-      if (minutes === 0) return `${hours}h`;
-      return `${hours}h ${minutes}min`;
-    }
-    return `${duration} min`;
+    const totalMinutes =
+      unit === "horas" || unit === "hours"
+        ? Number(duration) * 60
+        : Number(duration);
+
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
+
+    if (h === 0) return `${m} min`;
+    if (m === 0) return `${h}h`;
+    return `${h}h ${m}min`;
   };
 
   return (

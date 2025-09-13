@@ -6,33 +6,75 @@ import { useAppointment } from "@/hooks/useAppointment";
 import { useEffect } from "react";
 import { useAppointmentSettings } from "@/hooks/useAppointmentSettings";
 import { useAppointmentsData } from "@/hooks/useAppointmentsData";
+import { toast } from "react-toastify";
 
 export default function Appointments() {
-  // Navegación
   const navigate = useNavigate();
-  // Estado global de la cita en creación
   const { selectedServices, setSelectedServices, setAppointmentDetails } =
     useAppointment();
   const { data: settings, isLoading } = useAppointmentSettings();
   const { createAppointment, appointments } = useAppointmentsData();
-  // Si no hay servicios seleccionados, redirigir a la lista de servicios
+
   useEffect(() => {
     if (selectedServices.length === 0) {
       navigate("/appointments/my-appointments", { replace: true });
     }
   }, [selectedServices, navigate]);
-  // Cálculo de totales
-  const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
-  const totalDuration = selectedServices.reduce(
-    (sum, s) => sum + s.duration,
+
+  const totalPrice = selectedServices.reduce(
+    (sum, s) => sum + Number(s.price ?? 0),
     0
   );
+  const toMinutes = (d, u) =>
+    (u ?? "").toLowerCase() === "horas"
+      ? Math.round((Number(d) || 0) * 60)
+      : Math.round(Number(d) || 0);
+  const totalDuration = selectedServices.reduce(
+    (sum, s) => sum + toMinutes(s.duration, s.durationUnit),
+    0
+  );
+
   // Confirmar cita
-  const handleConfirmAppointment = (dateTime) => {
+  const handleConfirmAppointment = (payloadOrDate) => {
+    let date;
+    let services;
+
+    if (payloadOrDate instanceof Date) {
+      date = payloadOrDate; // legado
+      services = selectedServices.map((s) => s._id);
+    } else if (payloadOrDate && typeof payloadOrDate === "object") {
+      date = payloadOrDate.date;
+      services = payloadOrDate.services;
+    } else {
+      toast.error("Datos de la cita inválidos");
+      return;
+    }
+
+    // duración (preferir la que viene del hijo)
+    const duration =
+      payloadOrDate && payloadOrDate.duration != null
+        ? Number(payloadOrDate.duration) || 0
+        : totalDuration;
+
+    // normalizar fecha a Date válida
+    const dateObj = date instanceof Date ? date : new Date(date);
+    if (Number.isNaN(dateObj.getTime())) {
+      toast.error("Fecha inválida");
+      return;
+    }
+
+    // normalizar services a IDs
+    const serviceIds =
+      Array.isArray(services) && services.length > 0
+        ? services
+        : selectedServices.map((s) => s._id);
+
+    // Crear la cita
     createAppointment(
       {
-        services: selectedServices.map((s) => s._id),
-        date: dateTime.toISOString(),
+        services: serviceIds,
+        date: dateObj,
+        duration,
         notes: "",
       },
       {
@@ -40,17 +82,25 @@ export default function Appointments() {
           setAppointmentDetails({
             services: selectedServices,
             totalPrice,
-            totalDuration,
-            date: dateTime,
+            duration,
+            date: dateObj,
           });
-          setSelectedServices([]); // limpiar selección
+          setSelectedServices([]);
           navigate("/appointments/my-appointments");
+        },
+        onError: (err) => {
+          const msg =
+            err?.response?.data?.error ||
+            err?.message ||
+            "No se pudo crear la cita";
+          toast.error(msg);
         },
       }
     );
   };
-  // Función para volver a la selección de servicios
+
   const goBackToServices = () => navigate("/appointments/new");
+
   if (isLoading) return <p className="text-white">Cargando configuración...</p>;
 
   return (
@@ -72,7 +122,7 @@ export default function Appointments() {
       lunchEnd={settings.lunchEnd}
       maxMonthsAhead={settings.maxMonthsAhead}
       workingDays={settings.workingDays}
-      appointments={appointments} // 🔹 se lo pasamos al hijo
+      appointments={appointments}
     />
   );
 }
