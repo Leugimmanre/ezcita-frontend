@@ -119,7 +119,7 @@ export default function SettingsHome() {
                         {item.action}
                       </p>
                       <p className="text-sm text-gray-500 truncate">
-                        {item.category} — por {item.userName || "Sistema"}
+                        Autor: {item.userName || "Sistema"}
                       </p>
                     </div>
                     <div>
