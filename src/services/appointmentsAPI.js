@@ -21,7 +21,6 @@ export const createAppointment = async ({
     notes,
   };
   if (duration != null) payload.duration = Number(duration) || 0;
-
   const { data } = await api.post("/appointments", payload);
   return data;
 };
@@ -32,7 +31,7 @@ export const getAppointments = async (params) => {
   return res.data.appointments || [];
 };
 
-// Obtener citas en panel admin autenticado
+// Obtener citas admin
 export const getAppointments2 = async ({
   page = 1,
   limit = 10,
@@ -41,18 +40,11 @@ export const getAppointments2 = async ({
   endDate,
 } = {}) => {
   const params = { page: Number(page), limit: Number(limit) };
-
-  // Solo manda status si no es "all"
-  if (status && status !== "all") {
-    params.status = status;
-  }
-
-  // Solo manda rango si tienes ambos
+  if (status && status !== "all") params.status = status;
   if (startDate && endDate) {
     params.startDate = startDate;
     params.endDate = endDate;
   }
-
   const { data } = await api.get("/appointments", { params });
   return data; // { total, page, limit, appointments }
 };
@@ -65,12 +57,10 @@ export const getAppointmentById = async (id) => {
 
 // Actualizar cita
 export const updateAppointment = async (id, data) => {
-  // Normalizamos services para que sean SOLO IDs
   const payload = {
     ...data,
     services: data.services.map((s) => (typeof s === "string" ? s : s._id)),
   };
-
   const res = await api.put(`/appointments/${id}`, payload);
   return res.data;
 };

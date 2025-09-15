@@ -1,11 +1,11 @@
 // src/components/settingsComponents/AppointmentSettings.jsx
-import { useEffect, useState } from "react";
-import { generateTimeSlots } from "@/utils/generateTimeSlots";
+import { useEffect, useState, useMemo } from "react";
 import { useAppointmentSettings } from "@/hooks/useAppointmentSettings";
 import { toast } from "react-toastify";
-import { daysOfWeek } from "@/data/index";
 import SettingsStaff from "./SettingsStaff";
 import { useAppointmentContext } from "@/contexts/useAppointmentContext";
+import DayBlocksEditor from "./DayBlocksEditor";
+import { generateSlotsFromDayBlocks } from "@/utils/generateDaySlots";
 
 export default function AppointmentSettings() {
   const {
@@ -15,129 +15,93 @@ export default function AppointmentSettings() {
     saveSettings,
   } = useAppointmentSettings();
 
-  const [startHour, setStartHour] = useState(9);
-  const [endHour, setEndHour] = useState(18);
-  const [interval, setInterval] = useState(15);
-  const [lunchStart, setLunchStart] = useState(13);
-  const [lunchEnd, setLunchEnd] = useState(15);
-  const [maxMonthsAhead, setMaxMonthsAhead] = useState(1);
-  const [workingDays, setWorkingDays] = useState([1, 2, 3, 4, 5]);
+  // Solo avanzado
+  const [interval, setInterval] = useState(30);
+  const [maxMonthsAhead, setMaxMonthsAhead] = useState(2);
+  const [timezone, setTimezone] = useState("Europe/Madrid");
+  const [closedDates, setClosedDates] = useState([]);
   const { staffCount } = useAppointmentContext();
 
-  // Guardar configuración al cambiar
+  const [dayBlocks, setDayBlocks] = useState(null);
+
   useEffect(() => {
     if (settings) {
-      setStartHour(settings.startHour);
-      setEndHour(settings.endHour);
       setInterval(settings.interval);
-      setLunchStart(settings.lunchStart);
-      setLunchEnd(settings.lunchEnd);
       setMaxMonthsAhead(settings.maxMonthsAhead);
-      setWorkingDays(settings.workingDays || [1, 2, 3, 4, 5]);
+      setTimezone(settings.timezone || "Europe/Madrid");
+      setClosedDates(
+        Array.isArray(settings.closedDates) ? settings.closedDates : []
+      );
+      setDayBlocks(settings.dayBlocks || null);
     }
   }, [settings]);
 
-  // Alternar día de trabajo
-  const toggleWorkingDay = (dayId) => {
-    setWorkingDays((prev) =>
-      prev.includes(dayId)
-        ? prev.filter((id) => id !== dayId)
-        : [...prev, dayId]
-    );
-  };
+  // Preview
+  const previewDate = useMemo(() => {
+    const d = new Date();
+    const day = d.getDay();
+    const diff = (1 - day + 7) % 7 || 7; // siguiente lunes
+    d.setDate(d.getDate() + diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
 
-  const availableHours = generateTimeSlots(startHour, endHour, interval);
+  const previewSlots = useMemo(() => {
+    return dayBlocks
+      ? generateSlotsFromDayBlocks(previewDate, { dayBlocks, interval })
+      : [];
+  }, [dayBlocks, previewDate, interval]);
 
   const handleSave = () => {
-    saveSettings(
-      {
-        startHour,
-        endHour,
-        interval,
-        lunchStart,
-        lunchEnd,
-        maxMonthsAhead,
-        workingDays,
-        staffCount,
-      },
-      {
-        onSuccess: () => toast.success("Configuración guardada"),
-        onError: () => toast.error("Error al guardar"),
-      }
-    );
+    const payload = {
+      // Enviamos solo avanzado
+      dayBlocks,
+      interval,
+      maxMonthsAhead,
+      staffCount,
+      timezone,
+      closedDates,
+    };
+
+    saveSettings(payload, {
+      onSuccess: () => toast.success("Configuración guardada"),
+      onError: (e) =>
+        toast.error(e?.response?.data?.message || "Error al guardar"),
+    });
   };
 
   if (isLoading)
     return <p className="text-gray-700">Cargando configuración...</p>;
 
   return (
-    <div className="">
+    <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900">
           Configuración de Horarios
         </h2>
       </div>
 
-      {/* Sección de días de trabajo */}
-      <div className="space-y-4 mb-4">
+      {/* Editor de bloques por día (modo avanzado) */}
+      <div className="mb-8">
         <label className="block text-lg font-medium text-gray-700">
-          Días de trabajo
+          Bloques por día
         </label>
-        <p className="text-sm text-gray-500">
-          Selecciona los días en que tu negocio está abierto
+        <p className="text-sm text-gray-500 mb-4">
+          Configura los intervalos horarios para cada día de la semana. Los días
+          sin bloques quedarán cerrados.
         </p>
-        <div className="flex flex-wrap gap-2">
-          {daysOfWeek.map((day) => (
-            <button
-              key={day.id}
-              type="button"
-              onClick={() => toggleWorkingDay(day.id)}
-              className={`px-3 py-2 text-sm rounded-md ${
-                workingDays.includes(day.id)
-                  ? "bg-indigo-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              {day.name}
-            </button>
-          ))}
-        </div>
+        <DayBlocksEditor
+          value={dayBlocks}
+          onChange={setDayBlocks}
+          interval={interval}
+        />
       </div>
 
+      {/* Otros ajustes avanzados */}
       <label className="block text-lg font-medium text-gray-700 mb-4">
         Otros ajustes
       </label>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">
-            Hora de inicio
-          </label>
-          <input
-            type="number"
-            step="0.5"
-            value={startHour}
-            onChange={(e) => setStartHour(parseFloat(e.target.value))}
-            min={0}
-            max={23.5}
-            className="w-full p-2 bg-white border border-gray-300 rounded-md text-gray-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">
-            Hora de fin
-          </label>
-          <input
-            type="number"
-            step="0.5"
-            value={endHour}
-            onChange={(e) => setEndHour(parseFloat(e.target.value))}
-            min={0}
-            max={23.5}
-            className="w-full p-2 bg-white border border-gray-300 rounded-md text-gray-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-        </div>
-
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
             Intervalo (minutos)
@@ -146,39 +110,9 @@ export default function AppointmentSettings() {
             type="number"
             value={interval}
             onChange={(e) => setInterval(parseFloat(e.target.value))}
-            step="0.5"
-            min={15}
+            min={5}
+            max={240}
             className="w-full p-2 bg-white border border-gray-300 rounded-md text-gray-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">
-            Inicio comida
-          </label>
-          <input
-            type="number"
-            step="0.5"
-            value={lunchStart}
-            onChange={(e) => setLunchStart(parseFloat(e.target.value))}
-            min={0}
-            max={23.5}
-            className="w-full p-2 bg-white border border-gray-300 rounded-md text-gray-800"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">
-            Fin comida
-          </label>
-          <input
-            type="number"
-            step="0.5"
-            value={lunchEnd}
-            onChange={(e) => setLunchEnd(parseFloat(e.target.value))}
-            min={0}
-            max={23.5}
-            className="w-full p-2 bg-white border border-gray-300 rounded-md text-gray-800"
           />
         </div>
 
@@ -195,62 +129,75 @@ export default function AppointmentSettings() {
             className="w-full p-2 bg-white border border-gray-300 rounded-md text-gray-800"
           />
         </div>
-      </div>
 
-      {/* Sección de horarios disponibles */}
-      <div className="mt-6 pt-6 border-t border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">
-          Horarios disponibles
-        </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-          {availableHours.map((h) => (
-            <span
-              key={h}
-              className="text-sm font-medium text-indigo-700 bg-indigo-100 hover:bg-indigo-200 p-2 rounded text-center transition-colors cursor-default"
-            >
-              {h}
-            </span>
-          ))}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">
+            Zona horaria
+          </label>
+          <input
+            type="text"
+            value={timezone}
+            onChange={(e) => setTimezone(e.target.value)}
+            className="w-full p-2 bg-white border border-gray-300 rounded-md text-gray-800"
+            placeholder="Europe/Madrid"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">
+            Fechas cerradas (YYYY-MM-DD, separadas por coma)
+          </label>
+          <input
+            type="text"
+            value={closedDates.join(",")}
+            onChange={(e) =>
+              setClosedDates(
+                e.target.value
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter((s) => /^\d{4}-\d{2}-\d{2}$/.test(s))
+              )
+            }
+            className="w-full p-2 bg-white border border-gray-300 rounded-md text-gray-800"
+            placeholder="2025-12-25,2026-01-01"
+          />
         </div>
       </div>
 
-      {/* Componente para configuración de personal */}
+      {/* Previsualización */}
+      <div className="mt-6 pt-6 border-t border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+          Horarios disponibles (preview)
+        </h3>
+        {previewSlots.length === 0 ? (
+          <p className="text-sm text-gray-500">
+            No hay bloques configurados para el día de ejemplo.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            {previewSlots.map((h) => (
+              <span
+                key={h}
+                className="text-sm font-medium text-indigo-700 bg-indigo-100 hover:bg-indigo-200 p-2 rounded text-center transition-colors cursor-default"
+              >
+                {h}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Configuración de personal */}
       <SettingsStaff />
 
-      {/* Botón de guardar */}
+      {/* Guardar */}
       <div className="flex justify-end mt-8">
         <button
           onClick={handleSave}
           disabled={isSaving}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg transition-colors font-bold cursor-pointer uppercase"
         >
-          {isSaving ? (
-            <span className="flex items-center">
-              <svg
-                className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-              Guardando...
-            </span>
-          ) : (
-            "Guardar configuración"
-          )}
+          {isSaving ? "Guardando..." : "Guardar configuración"}
         </button>
       </div>
     </div>

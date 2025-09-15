@@ -16,7 +16,20 @@ export const getAppointmentSettings = async () => {
 
 // Actualizar configuración
 export const saveAppointmentSettings = async (data) => {
-  const res = await api.post("/appointment-settings", data);
+  // Enviamos SOLO campos del modo avanzado
+  const payload = {
+    // dayBlocks obligatorio
+    dayBlocks: data.dayBlocks,
+    // interval / maxMonthsAhead / staffCount obligatorios
+    interval: Number(data.interval),
+    maxMonthsAhead: Number(data.maxMonthsAhead),
+    staffCount: Number(data.staffCount),
+    // opcionales
+    timezone: data.timezone,
+    closedDates: Array.isArray(data.closedDates) ? data.closedDates : [],
+  };
+
+  const res = await api.post("/appointment-settings", payload);
   return res.data.data;
 };
 

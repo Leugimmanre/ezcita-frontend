@@ -1,19 +1,22 @@
 // src/components/appointments/Appointment.jsx
 import { MAX_SERVICES_SELECTION } from "@/data/index";
 import { useAppointment } from "@/hooks/useAppointment";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { es } from "date-fns/locale";
 import { registerLocale } from "react-datepicker";
-import { generateTimeSlots } from "@/utils/generateTimeSlots";
+// NUEVO: solo utils avanzados
+import {
+  generateSlotsFromDayBlocks,
+  fitsAnyDayBlock,
+} from "@/utils/generateDaySlots";
 import { useAppointmentContext } from "@/contexts/useAppointmentContext";
 import { useQuery } from "@tanstack/react-query";
 import { getServices } from "@/services/servicesAPI";
 import { toast } from "react-toastify";
 import { useAvailability } from "@/hooks/useAvailability";
 
-// Registrar el locale en español
 registerLocale("es", es);
 
 export default function Appointment({
@@ -21,16 +24,15 @@ export default function Appointment({
   onConfirm = () => {},
   isEditing = false,
   appointmentToEdit = null,
-  startHour = 9,
-  endHour = 18,
+  // NUEVO: solo avanzado
   interval = 30,
-  lunchStart = 13,
-  lunchEnd = 15,
   maxMonthsAhead = 1,
-  workingDays = [1, 2, 3, 4, 5],
   appointments = [],
+  dayBlocks = null,
+  closedDates = [],
+  timezone = "Europe/Madrid",
+  staffCount: staffCountProp,
 }) {
-  const availableHours = generateTimeSlots(startHour, endHour, interval);
   const { selectedServices, setSelectedServices } = useAppointment();
   const [selectedTime, setSelectedTime] = useState(null);
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -39,10 +41,9 @@ export default function Appointment({
     nextHour.setHours(now.getHours() + 1, 0, 0, 0);
     return nextHour;
   });
-  const { staffCount } = useAppointmentContext();
-  const capacity = Number(staffCount) || 1;
+  const { staffCount: ctxStaffCount } = useAppointmentContext();
+  const capacity = Number(staffCountProp ?? ctxStaffCount ?? 1); // NUEVO
 
-  // Traer servicios
   const { data: allServices = [] } = useQuery({
     queryKey: ["services"],
     queryFn: getServices,
@@ -51,7 +52,6 @@ export default function Appointment({
   const canConfirm = Boolean(selectedTime) && selectedServices.length > 0;
   const noServices = selectedServices.length === 0;
 
-  // Inicializar edición
   useEffect(() => {
     if (isEditing && appointmentToEdit) {
       setSelectedServices(appointmentToEdit.services);
@@ -60,17 +60,17 @@ export default function Appointment({
       const timeString = appointmentDate.toLocaleTimeString("es-ES", {
         hour: "2-digit",
         minute: "2-digit",
+        timeZone: timezone,
       });
       setSelectedTime(timeString);
     }
-  }, [isEditing, appointmentToEdit, setSelectedServices]);
+  }, [isEditing, appointmentToEdit, setSelectedServices, timezone]);
 
-  // Totales
   const totalPrice = selectedServices.reduce(
     (sum, s) => sum + Number(s.price ?? 0),
     0
   );
-  // helpers para formatear duración
+
   const toMinutes = (duration, unit) => {
     const n = Number(duration);
     if (Number.isNaN(n)) return 0;
@@ -102,10 +102,24 @@ export default function Appointment({
   );
   const maxServices = MAX_SERVICES_SELECTION;
 
-  // Handlers
+  const advancedMode = !!dayBlocks;
+
+  const availableHours = useMemo(() => {
+    if (!selectedDate) return [];
+    if (!advancedMode) return [];
+    return generateSlotsFromDayBlocks(selectedDate, { dayBlocks, interval });
+  }, [advancedMode, selectedDate, dayBlocks, interval]);
+
+  const excludeId = isEditing ? appointmentToEdit?._id : undefined;
+  const { data: busy = [], isLoading: loadingBusy } = useAvailability(
+    selectedDate,
+    excludeId
+  );
+
   const handleRemoveService = (serviceId) => {
     setSelectedServices((prev) => prev.filter((s) => s._id !== serviceId));
   };
+
   const handleAddService = (e) => {
     const serviceId = e.target.value;
     if (!serviceId) return;
@@ -121,13 +135,8 @@ export default function Appointment({
     e.target.value = "";
   };
 
-  const excludeId = isEditing ? appointmentToEdit?._id : undefined;
-  const { data: busy = [], isLoading: loadingBusy } = useAvailability(
-    selectedDate,
-    excludeId
-  );
-
   const handleClearSelection = () => setSelectedServices([]);
+
   const handleConfirm = () => {
     if (!canConfirm) return;
     const [hour, minute] = selectedTime.split(":").map(Number);
@@ -135,10 +144,11 @@ export default function Appointment({
     finalDate.setHours(hour, minute, 0, 0);
     const finalEnd = new Date(finalDate);
     finalEnd.setMinutes(finalEnd.getMinutes() + totalDuration);
+
     const overlaps =
       appointments?.filter((appt) => {
         if (!["pending", "confirmed"].includes(appt.status)) return false;
-        if (appt._id === appointmentToEdit?._id) return false; // si estás editando
+        if (appt._id === appointmentToEdit?._id) return false;
         const apptStart = new Date(appt.date);
         const apptEnd = new Date(apptStart);
         apptEnd.setMinutes(apptEnd.getMinutes() + appt.duration);
@@ -157,135 +167,46 @@ export default function Appointment({
       duration: totalDuration,
     });
   };
+
   const handleDateChange = (date) => {
     setSelectedDate(date);
     setSelectedTime(null);
   };
 
-  // ====== CLASES ======
-  // Tarjeta principal (CLARO por tokens + OSCURO original)
-  const mainSection =
-    "mt-8 p-5 rounded-xl border " +
-    // claro
-    "bg-[var(--color-secondary)] border-[var(--color-secondary-light)] " +
-    // oscuro
-    "dark:bg-gradient-to-r dark:from-blue-900/50 dark:to-indigo-900/50 dark:border-blue-700/50";
+  const DOW_KEYS = [
+    "sunday",
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+  ];
 
-  // Encabezado de vista
-  const headerTitle =
-    "text-4xl font-extrabold text-[var(--color-text)] dark:text-white mb-3";
-  const headerSubtitle = "text-lg text-[var(--color-text)]/80 dark:text-white";
-
-  // Botón “volver”
-  const backBtn =
-    "flex items-center text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] " +
-    "dark:text-blue-400 dark:hover:text-blue-300";
-
-  // Fila de servicio seleccionado
-  const serviceItemClasses =
-    // claro
-    "flex justify-between items-center p-3 rounded-lg border " +
-    "bg-[color-mix(in_oklab,var(--color-primary)_8%,var(--color-secondary)_92%)] " +
-    "border-[color-mix(in_oklab,var(--color-primary)_35%,var(--color-secondary-light)_65%)] " +
-    // oscuro
-    "dark:bg-blue-800/30 dark:border-blue-700/50";
-
-  const priceTextClasses =
-    "text-lg font-bold text-[var(--color-primary)] dark:text-blue-300";
-  const durationTextClasses =
-    "text-sm text-[var(--color-muted)] dark:text-blue-200";
-
-  // DatePicker input
-  const datePickerClasses =
-    "w-full p-2 rounded-lg border " +
-    "bg-[var(--color-bg)] text-[var(--color-text)] border-[var(--color-secondary-light)] " +
-    "focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent " +
-    "dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:focus:ring-blue-500";
-
-  // Caja de fecha/hora (contenedor)
-  const scheduleBox =
-    // claro
-    "rounded-lg border p-4 " +
-    "bg-[var(--color-secondary)] border-[var(--color-secondary-light)] " +
-    // oscuro
-    "dark:bg-gray-800/50 dark:border-gray-700";
-
-  // Botones de hora
-  const slotBase = "text-center text-sm font-bold p-2 rounded-lg transition";
-  const slotSelected =
-    // claro
-    "bg-[var(--color-primary)] text-white ring-2 ring-[color-mix(in_oklab,var(--color-primary)_55%,white_45%)] " +
-    // oscuro
-    "dark:bg-blue-500 dark:text-white dark:ring-2 dark:ring-blue-300";
-  const slotIdle =
-    // claro
-    "bg-[var(--color-secondary)] text-[var(--color-primary)] hover:bg-[color-mix(in_oklab,var(--color-primary)_8%,var(--color-secondary)_92%)] " +
-    // oscuro (aprox equivalente a tu blanco/azul)
-    "dark:bg-gray-800 dark:text-blue-300 dark:hover:bg-gray-700";
-  const slotDisabled = "opacity-30 cursor-not-allowed";
-
-  // Totales
-  const totalsRow =
-    "mt-5 pt-4 flex justify-between items-center border-t " +
-    "border-[var(--color-secondary-light)] dark:border-blue-700/50";
-  const totalsLabel = "text-sm text-[var(--color-muted)] dark:text-blue-300";
-  const totalsValueLeft =
-    "text-lg font-bold text-[var(--color-text)] dark:text-white";
-  const totalsValueRight =
-    "text-2xl font-bold text-[var(--color-text)] dark:text-white";
-
-  // Avisos/info
-  const infoBoxEmptyEdit =
-    "p-4 rounded-lg " +
-    "bg-[color-mix(in_oklab,var(--color-primary)_8%,var(--color-secondary)_92%)] " +
-    "border border-[color-mix(in_oklab,var(--color-primary)_35%,var(--color-secondary-light)_65%)] " +
-    "text-[var(--color-text)] " +
-    "dark:bg-blue-900/30 dark:border-blue-700/50 dark:text-blue-200";
-
-  const infoSelected =
-    "p-3 rounded-lg " +
-    "bg-[color-mix(in_oklab,var(--color-primary)_8%,var(--color-secondary)_92%)] text-[var(--color-text)] " +
-    "dark:bg-blue-900/30 dark:text-white";
-
-  // Botón “Limpiar”
-  const clearBtn =
-    "text-sm flex items-center px-3 py-1.5 rounded transition " +
-    "bg-[var(--color-secondary-light)] hover:bg-[var(--color-secondary)] text-[var(--color-text)] " +
-    "dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white";
-
-  // Botón final
-  const confirmBtnEnabled =
-    "bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white";
-  const confirmBtnDisabled =
-    "bg-gray-500 opacity-50 cursor-not-allowed text-white";
-
-  {
-    loadingBusy && (
-      <p className="text-sm text-[var(--color-muted)] mt-2">
-        Cargando disponibilidad...
-      </p>
-    );
-  }
+  const isClosedDate = (date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return closedDates.includes(`${y}-${m}-${d}`);
+  };
 
   return (
     <div className="mt-10 max-w-6xl mx-auto">
-      {/* Encabezado */}
       <header className="text-center sm:text-left mb-10">
-        <h1 className={headerTitle}>
+        <h1 className="text-4xl font-extrabold text-[var(--color-text)] dark:text-white mb-3">
           {isEditing ? "Editar Cita" : "Detalle de Cita y Resumen"}
         </h1>
-        <p className={headerSubtitle}>
+        <p className="text-lg text-[var(--color-text)]/80 dark:text-white">
           {isEditing
             ? "Modifica los detalles de tu cita"
             : "Verifica la información y confirma tu cita"}
         </p>
       </header>
 
-      {/* Volver */}
       <nav className="mb-6">
         <button
           onClick={onBack}
-          className={backBtn}
+          className="flex items-center text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] dark:text-blue-400 dark:hover:text-blue-300"
           aria-label="Volver a selección de servicios"
         >
           <svg
@@ -304,13 +225,18 @@ export default function Appointment({
         </button>
       </nav>
 
-      {/* CONTENIDO PRINCIPAL */}
       {isEditing || selectedServices.length > 0 ? (
-        <section className={mainSection}>
-          {/* Encabezado de sección */}
+        <section
+          className={
+            "mt-8 p-5 rounded-xl border " +
+            "bg-[var(--color-secondary)] border-[var(--color-secondary-light)] " +
+            "dark:bg-gradient-to-r dark:from-blue-900/50 dark:to-indigo-900/50 dark:border-blue-700/50"
+          }
+        >
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-[var(--color-text)] dark:text-white">
-              Servicios seleccionados ({selectedServices.length}/{maxServices})
+              Servicios seleccionados ({selectedServices.length}/
+              {MAX_SERVICES_SELECTION})
             </h2>
 
             {isEditing && (
@@ -323,10 +249,8 @@ export default function Appointment({
                     onChange={handleAddService}
                     className={
                       "w-full pl-3 pr-3 py-3 rounded-lg border appearance-none transition-all " +
-                      // claro
                       "bg-[var(--color-bg)] text-[var(--color-text)] border-[var(--color-secondary-light)] " +
                       "focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent " +
-                      // oscuro
                       "dark:bg-gray-700/80 dark:text-white dark:border-blue-600/50 dark:focus:ring-blue-500 dark:hover:bg-gray-700"
                     }
                   >
@@ -339,8 +263,9 @@ export default function Appointment({
                   </select>
                 </div>
                 <p className="mt-1 text-sm text-[var(--color-muted)] dark:text-blue-300">
-                  Puedes añadir hasta {maxServices - selectedServices.length}{" "}
-                  servicios más
+                  Puedes añadir hasta{" "}
+                  {MAX_SERVICES_SELECTION - selectedServices.length} servicios
+                  más
                 </p>
               </div>
             )}
@@ -348,7 +273,11 @@ export default function Appointment({
             {!isEditing && (
               <button
                 onClick={handleClearSelection}
-                className={clearBtn}
+                className={
+                  "text-sm flex items-center px-3 py-1.5 rounded transition " +
+                  "bg-[var(--color-secondary-light)] hover:bg-[var(--color-secondary)] text-[var(--color-text)] " +
+                  "dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white"
+                }
                 aria-label="Limpiar selección"
               >
                 Limpiar
@@ -356,20 +285,24 @@ export default function Appointment({
             )}
           </div>
 
-          {/* Lista de servicios */}
           {selectedServices.length > 0 ? (
             <div className="space-y-3" role="list">
               {selectedServices.map((service) => (
                 <div
                   key={service._id}
-                  className={serviceItemClasses}
+                  className={
+                    "flex justify-between items-center p-3 rounded-lg border " +
+                    "bg-[color-mix(in_oklab,var(--color-primary)_8%,var(--color-secondary)_92%)] " +
+                    "border-[color-mix(in_oklab,var(--color-primary)_35%,var(--color-secondary-light)_65%)] " +
+                    "dark:bg-blue-800/30 dark:border-blue-700/50"
+                  }
                   role="listitem"
                 >
                   <div>
                     <p className="font-medium text-[var(--color-text)] dark:text-white">
                       {service.name}
                     </p>
-                    <p className={durationTextClasses}>
+                    <p className="text-sm text-[var(--color-muted)] dark:text-blue-200">
                       {formatServiceDuration(
                         service.duration,
                         service.durationUnit
@@ -377,7 +310,9 @@ export default function Appointment({
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <p className={priceTextClasses}>{service.price}€</p>
+                    <p className="text-lg font-bold text-[var(--color-primary)] dark:text-blue-300">
+                      {service.price}€
+                    </p>
                     <button
                       onClick={() => handleRemoveService(service._id)}
                       className="text-[var(--color-danger)] hover:text-[var(--color-danger-hover)] dark:text-red-400 dark:hover:text-red-300"
@@ -402,30 +337,48 @@ export default function Appointment({
             </div>
           ) : (
             isEditing && (
-              <div className={infoBoxEmptyEdit}>
+              <div
+                className={
+                  "p-4 rounded-lg " +
+                  "bg-[color-mix(in_oklab,var(--color-primary)_8%,var(--color-secondary)_92%)] " +
+                  "border border-[color-mix(in_oklab,var(--color-primary)_35%,var(--color-secondary-light)_65%)] " +
+                  "text-[var(--color-text)] " +
+                  "dark:bg-blue-900/30 dark:border-blue-700/50 dark:text-blue-200"
+                }
+              >
                 Esta cita no tiene servicios. Usa el selector de arriba para
                 añadir al menos uno.
               </div>
             )
           )}
 
-          {/* Totales */}
-          <div className={totalsRow}>
+          <div className="mt-5 pt-4 flex justify-between items-center border border-t-0 border-[var(--color-secondary-light)] dark:border-blue-700/50">
             <div>
-              <p className={totalsLabel}>Duración total:</p>
-              <p className={totalsValueLeft}>
+              <p className="text-sm text-[var(--color-muted)] dark:text-blue-300">
+                Duración total:
+              </p>
+              <p className="text-lg font-bold text-[var(--color-text)] dark:text-white">
                 {formatTotalMinutes(totalDuration)}
               </p>
             </div>
             <div className="text-right">
-              <p className={totalsLabel}>Precio total:</p>
-              <p className={totalsValueRight}>{totalPrice}€</p>
+              <p className="text-sm text-[var(--color-muted)] dark:text-blue-300">
+                Precio total:
+              </p>
+              <p className="text-2xl font-bold text-[var(--color-text)] dark:text-white">
+                {totalPrice}€
+              </p>
             </div>
           </div>
 
-          {/* Selección de fecha y hora */}
           <div className="mt-6 space-y-4">
-            <div className={scheduleBox}>
+            <div
+              className={
+                "rounded-lg border p-4 " +
+                "bg-[var(--color-secondary)] border-[var(--color-secondary-light)] " +
+                "dark:bg-gray-800/50 dark:border-gray-700"
+              }
+            >
               <h3 className="text-[var(--color-text)] dark:text-white font-medium mb-3">
                 Selecciona fecha y hora:
               </h3>
@@ -436,17 +389,27 @@ export default function Appointment({
                 minDate={new Date()}
                 locale="es"
                 dateFormat="dd/MM/yyyy"
-                className={datePickerClasses}
+                className={
+                  "w-full p-2 rounded-lg border " +
+                  "bg-[var(--color-bg)] text-[var(--color-text)] border-[var(--color-secondary-light)] " +
+                  "focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent " +
+                  "dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:focus:ring-blue-500"
+                }
                 placeholderText="Selecciona fecha y hora"
+                // NUEVO: filtrado SOLO avanzado
                 filterDate={(date) => {
-                  const oneMonthLater = new Date();
-                  oneMonthLater.setMonth(
-                    oneMonthLater.getMonth() + maxMonthsAhead
+                  const limit = new Date();
+                  limit.setMonth(
+                    limit.getMonth() + Number(maxMonthsAhead || 0)
                   );
-                  const dayOfWeek = date.getDay();
-                  return (
-                    date <= oneMonthLater && workingDays.includes(dayOfWeek)
-                  );
+                  const withinMonths = date <= limit;
+                  if (!withinMonths) return false;
+                  if (isClosedDate(date)) return false;
+                  const key = DOW_KEYS[date.getDay()];
+                  const blocks = Array.isArray(dayBlocks?.[key])
+                    ? dayBlocks[key]
+                    : [];
+                  return blocks.length > 0;
                 }}
               />
 
@@ -475,21 +438,31 @@ export default function Appointment({
 
                     const isBooked = overlappingCount >= capacity;
 
-                    const isWorkingDay = workingDays.includes(
-                      selectedDate.getDay()
+                    let disabled;
+                    const hhmm = `${String(hourPart).padStart(2, "0")}:${String(
+                      minutePart
+                    ).padStart(2, "0")}`;
+                    const fitsBlock = fitsAnyDayBlock(
+                      selectedDate,
+                      hhmm,
+                      totalDuration || interval,
+                      { dayBlocks }
                     );
-
-                    const disabled =
+                    disabled =
                       noServices ||
                       dateWithTime < now ||
                       isBooked ||
-                      (dateWithTime.getHours() +
-                        dateWithTime.getMinutes() / 60 >=
-                        lunchStart &&
-                        dateWithTime.getHours() +
-                          dateWithTime.getMinutes() / 60 <
-                          lunchEnd) ||
-                      !isWorkingDay;
+                      !fitsBlock;
+
+                    const slotBase =
+                      "text-center text-sm font-bold p-2 rounded-lg transition";
+                    const slotSelected =
+                      "bg-[var(--color-primary)] text-white ring-2 ring-[color-mix(in_oklab,var(--color-primary)_55%,white_45%)] " +
+                      "dark:bg-blue-500 dark:text-white dark:ring-2 dark:ring-blue-300";
+                    const slotIdle =
+                      "bg-[var(--color-secondary)] text-[var(--color-primary)] hover:bg-[color-mix(in_oklab,var(--color-primary)_8%,var(--color-secondary)_92%)] " +
+                      "dark:bg-gray-800 dark:text-blue-300 dark:hover:bg-gray-700";
+                    const slotDisabled = "opacity-30 cursor-not-allowed";
 
                     const classes =
                       slotBase +
@@ -524,6 +497,12 @@ export default function Appointment({
                 </div>
               )}
 
+              {loadingBusy && (
+                <p className="text-sm text-[var(--color-muted)] mt-2">
+                  Cargando disponibilidad...
+                </p>
+              )}
+
               {noServices && (
                 <p className="mt-2 text-sm text-[var(--color-muted)] dark:text-blue-300">
                   Añade al menos un servicio para habilitar la selección de
@@ -533,7 +512,13 @@ export default function Appointment({
             </div>
 
             {selectedTime && (
-              <div className={infoSelected}>
+              <div
+                className={
+                  "p-3 rounded-lg " +
+                  "bg-[color-mix(in_oklab,var(--color-primary)_8%,var(--color-secondary)_92%)] text-[var(--color-text)] " +
+                  "dark:bg-blue-900/30 dark:text-white"
+                }
+              >
                 <p>
                   <span className="font-semibold">Fecha seleccionada:</span>{" "}
                   {selectedDate.toLocaleDateString("es-ES", {
@@ -541,17 +526,19 @@ export default function Appointment({
                     day: "numeric",
                     month: "long",
                     year: "numeric",
+                    timeZone: timezone,
                   })}{" "}
                   a las <span className="font-semibold">{selectedTime}</span>
                 </p>
               </div>
             )}
 
-            {/* Botón final */}
             <button
               className={
                 "w-full py-3 font-bold rounded-lg transition-all shadow-lg cursor-pointer uppercase " +
-                (canConfirm ? confirmBtnEnabled : confirmBtnDisabled)
+                (canConfirm
+                  ? "bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white"
+                  : "bg-gray-500 opacity-50 cursor-not-allowed text-white")
               }
               onClick={handleConfirm}
               aria-label={isEditing ? "Guardar Cambios" : "Confirmar cita"}
@@ -562,13 +549,10 @@ export default function Appointment({
           </div>
         </section>
       ) : (
-        /* Estado vacío (CREACIÓN) */
         <section
           className={
             "mt-8 p-6 rounded-xl border text-center " +
-            // claro
             "bg-[var(--color-secondary)] border-[var(--color-secondary-light)] text-[var(--color-text)] " +
-            // oscuro
             "dark:bg-blue-900/30 dark:border-blue-700/50 dark:text-blue-200"
           }
         >
@@ -587,7 +571,7 @@ export default function Appointment({
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a1 1 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V6a1 1 0 100-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
               />
             </svg>
           </div>
@@ -595,8 +579,8 @@ export default function Appointment({
             No has seleccionado servicios aún
           </h2>
           <p className="text-[var(--color-muted)] dark:text-blue-200">
-            Por favor, selecciona hasta {maxServices} servicios para continuar
-            con tu reserva
+            Por favor, selecciona hasta {MAX_SERVICES_SELECTION} servicios para
+            continuar con tu reserva
           </p>
           <button
             onClick={onBack}

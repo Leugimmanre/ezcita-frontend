@@ -1,4 +1,4 @@
-// src/views/settingsViews/SettingsAppointmentsViews.jsx
+// src/components/settingsComponents/SettingsAppointments.jsx
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
@@ -16,9 +16,12 @@ import {
   getAvailability,
   updateAppointment,
 } from "@/services/appointmentsAPI";
-import { generateTimeSlots } from "@/utils/generateTimeSlots";
+// NUEVO: solo utilitarios avanzados
+import {
+  generateSlotsFromDayBlocks,
+  fitsAnyDayBlock,
+} from "@/utils/generateDaySlots";
 
-// Utils
 const normalize = (s) =>
   (s ?? "")
     .toString()
@@ -26,49 +29,27 @@ const normalize = (s) =>
     .replace(/\p{Diacritic}/gu, "")
     .toLowerCase();
 
-// Helper: duración a minutos (respeta "horas")
 function toMinutes(d, u) {
   const n = Number(d) || 0;
   return String(u || "").toLowerCase() === "horas" ? n * 60 : n;
 }
 
-// Helper: suma minutos a Date
 function addMinutes(date, min) {
   const d = new Date(date);
   d.setMinutes(d.getMinutes() + min);
   return d;
 }
 
-// Helper: extrae hora+min en decimal (9:30 => 9.5)
-function hourMinOf(date) {
-  return date.getHours() + date.getMinutes() / 60;
-}
-function fitsBlock(date, durationMin, lunchStart, lunchEnd, endHour) {
-  if (!durationMin || durationMin <= 0) return false;
-  const startHM = hourMinOf(date);
-  const endHM = startHM + durationMin / 60;
-  if (endHM > endHour) return false;
-  const crossesLunch =
-    startHM < lunchEnd &&
-    endHM > lunchStart &&
-    !(endHM <= lunchStart || startHM >= lunchEnd);
-  const fullyMorning = endHM <= lunchStart;
-  const fullyAfternoon = startHM >= lunchEnd;
-  return (fullyMorning || fullyAfternoon) && !crossesLunch;
-}
-
-// Helper: formatea fecha a "yyyy-mm-dd"
 function yyyy_mm_dd(date) {
   const d = new Date(date);
   const pad = (n) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-// Modal Crear/Editar (scrollable + footer fijo)
+// Modal Crear/Editar
 function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
   const queryClient = useQueryClient();
 
-  // Settings y servicios
   const { data: settings } = useQuery({
     queryKey: ["appointment-settings"],
     queryFn: getAppointmentSettings,
@@ -81,7 +62,6 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
     enabled: isOpen,
   });
 
-  // Estado UI
   const [userQuery, setUserQuery] = useState("");
   const [userOptions, setUserOptions] = useState([]);
   const [fetchingUsers, setFetchingUsers] = useState(false);
@@ -96,9 +76,8 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
     n.setMinutes(0, 0, 0);
     return n;
   });
-  const [selectedTime, setSelectedTime] = useState(""); // "HH:mm"
+  const [selectedTime, setSelectedTime] = useState("");
 
-  // Trap ESC para cerrar
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e) => e.key === "Escape" && onClose();
@@ -116,12 +95,11 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
   });
   const busy = availabilityData?.busy || [];
 
-  // Inicializar modal
   useEffect(() => {
     if (!isOpen) return;
 
     if (mode === "edit" && initial) {
-      setSelectedUser(initial.user || null); // si en edición quieres mostrarlo (aunque sea solo lectura)
+      setSelectedUser(initial.user || null);
       setStatus(initial.status || "pending");
       setNotes(initial.notes || "");
 
@@ -148,7 +126,6 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
     }
   }, [isOpen, mode, initial]);
 
-  // Mapear servicios iniciales en edición
   useEffect(() => {
     if (!isOpen) return;
     if (mode !== "edit" || !initial) return;
@@ -163,7 +140,6 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
     setSelectedServices(mapped);
   }, [isOpen, mode, initial, servicesList]);
 
-  // Buscar usuarios (insensible a tildes en el cliente)
   useEffect(() => {
     let active = true;
     const run = async () => {
@@ -199,7 +175,6 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
     };
   }, [userQuery]);
 
-  // Totales
   const totals = useMemo(() => {
     const duration = selectedServices.reduce(
       (s, x) => s + toMinutes(x?.duration, x?.durationUnit),
@@ -212,46 +187,36 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
     return { duration, price };
   }, [selectedServices]);
 
-  // Slots del día
+  // NUEVO: slots solo con dayBlocks
   const slots = useMemo(() => {
-    if (!settings) return [];
-    return generateTimeSlots(
-      settings.startHour,
-      settings.endHour,
-      settings.interval
-    );
-  }, [settings]);
+    if (!settings?.dayBlocks) return [];
+    return generateSlotsFromDayBlocks(selectedDate, {
+      dayBlocks: settings.dayBlocks,
+      interval: settings.interval,
+    });
+  }, [settings, selectedDate]);
 
-  // Evitar solapamiento con el mismo (en edición)
   const staffCount = Number(settings?.staffCount) || 1;
 
-  // Reglas de disponibilidad
+  // NUEVO: deshabilitado solo por reglas avanzadas
   const getSlotDisableInfo = (hhmm) => {
-    if (!settings) return { disabled: true, reason: "no-settings" };
+    if (!settings?.dayBlocks) return { disabled: true, reason: "no-settings" };
 
     const [h, m] = hhmm.split(":").map(Number);
     const candidate = new Date(selectedDate);
     candidate.setHours(h, m, 0, 0);
 
-    // Reglas básicas
-    if (!settings.workingDays?.includes(candidate.getDay()))
-      return { disabled: true, reason: "non-working-day" };
     if (candidate < new Date()) return { disabled: true, reason: "past" };
     if (!selectedServices.length)
       return { disabled: true, reason: "no-services" };
 
-    // No cruzar comida / fin jornada
-    const fits = fitsBlock(
-      candidate,
-      totals.duration,
-      settings.lunchStart,
-      settings.lunchEnd,
-      settings.endHour
-    );
-    if (!fits) return { disabled: true, reason: "out-of-block" };
+    const duration = totals.duration;
+    const ok = fitsAnyDayBlock(candidate, hhmm, duration, {
+      dayBlocks: settings.dayBlocks,
+    });
+    if (!ok) return { disabled: true, reason: "out-of-block" };
 
-    // Capacidad / solapes usando disponibilidad del backend
-    const candidateEnd = addMinutes(candidate, totals.duration);
+    const candidateEnd = addMinutes(candidate, duration);
     const overlapping = busy.filter((b) => {
       const bStart = new Date(b.start);
       const bEnd = addMinutes(bStart, Number(b.duration) || 0);
@@ -263,7 +228,6 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
     return { disabled: false, reason: null };
   };
 
-  // Mutations
   const createMut = useMutation({
     mutationFn: adminCreateAppointment,
     onSuccess: (res) => {
@@ -294,7 +258,7 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!settings) return;
+    if (!settings?.dayBlocks) return;
     if (!selectedServices.length)
       return toast.error("Selecciona al menos un servicio");
     if (!selectedTime) return toast.error("Selecciona una hora válida");
@@ -325,7 +289,6 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
 
   if (!isOpen) return null;
 
-  // Rango fecha
   const minDateStr = yyyy_mm_dd(new Date());
   const maxDate = new Date();
   if (settings?.maxMonthsAhead != null) {
@@ -339,12 +302,10 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
       role="dialog"
       aria-modal="true"
       onMouseDown={(e) => {
-        // Cerrar al hacer click en el fondo (no si clic dentro del cuadro)
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div className="bg-white rounded-2xl shadow-xl flex flex-col max-h-[90vh] w-full max-w-2xl mx-auto">
-        {/* Header fijo */}
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <h2 className="text-lg font-semibold">
             {mode === "create" ? "Nueva cita" : "Editar cita"}
@@ -357,13 +318,11 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
           </button>
         </div>
 
-        {/* Body scrollable */}
         <form
           onSubmit={handleSubmit}
           className="flex-1 flex flex-col overflow-hidden"
         >
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
-            {/* Usuario */}
             {mode === "create" ? (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -436,7 +395,6 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
               </div>
             )}
 
-            {/* Servicios */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Servicios
@@ -480,7 +438,6 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
               </div>
             </div>
 
-            {/* Fecha / Estado */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -518,23 +475,21 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
               </div>
             </div>
 
-            {/* Info settings */}
+            {/* NUEVO: Info compacta basada SOLO en avanzado */}
             {settings && (
               <div className="text-xs text-gray-600 p-2 bg-gray-50 rounded-lg">
-                Jornada: {settings.startHour}–{settings.endHour} · Comida:{" "}
-                {settings.lunchStart}–{settings.lunchEnd} · Intervalo:{" "}
-                {settings.interval}′ · Capacidad: {settings.staffCount}
+                Intervalo: {settings.interval}′ · Capacidad:{" "}
+                {settings.staffCount} · Zona horaria: {settings.timezone}
               </div>
             )}
 
-            {/* Grid de horas */}
             {settings && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Horarios disponibles
                 </label>
                 <div className="max-h-40 overflow-y-auto p-1 border rounded-lg">
-                  <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+                  <div className="grid grid-cols-3 md-grid-cols-4 gap-2">
                     {slots.map((hhmm) => {
                       const { disabled, reason } = loadingAvail
                         ? { disabled: true, reason: "loading" }
@@ -556,17 +511,14 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
                           disabled={disabled}
                           className={cls}
                           onClick={() => {
-                            // por si quitas pointer-events-none en el futuro
                             if (disabled) {
                               const msg =
                                 reason === "busy"
                                   ? "Franja ocupada"
                                   : reason === "past"
                                   ? "Hora en el pasado"
-                                  : reason === "non-working-day"
-                                  ? "Día no laborable"
                                   : reason === "out-of-block"
-                                  ? "No cabe dentro de la jornada/pausa"
+                                  ? "No cabe dentro de los bloques del día"
                                   : reason === "no-services"
                                   ? "Selecciona al menos un servicio"
                                   : "Franja no disponible";
@@ -585,7 +537,6 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
               </div>
             )}
 
-            {/* Notas */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Notas
@@ -600,7 +551,6 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
             </div>
           </div>
 
-          {/* Footer fijo siempre visible */}
           <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex justify-end gap-3">
             <button
               type="button"
@@ -627,7 +577,7 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Menú de acciones - VERSIÓN MEJORADA (sin cierre en scroll)
+// Menú de acciones
 // ─────────────────────────────────────────────────────────────
 function ActionMenu({ onEdit, onComplete, onDelete }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -647,12 +597,9 @@ function ActionMenu({ onEdit, onComplete, onDelete }) {
 
   const calculateMenuDirection = () => {
     if (!buttonRef.current) return "bottom";
-
     const buttonRect = buttonRef.current.getBoundingClientRect();
     const spaceBelow = window.innerHeight - buttonRect.bottom;
-    const menuHeight = 120; // Altura aproximada del menú
-
-    // Si no hay suficiente espacio debajo pero sí arriba, abrir hacia arriba
+    const menuHeight = 120;
     if (spaceBelow < menuHeight && buttonRect.top > menuHeight) {
       return "top";
     }
@@ -728,7 +675,7 @@ function ActionMenu({ onEdit, onComplete, onDelete }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Vista principal con búsqueda insensible a acentos
+// Vista principal
 // ─────────────────────────────────────────────────────────────
 export default function SettingsAppointments() {
   const [page, setPage] = useState(1);
@@ -780,7 +727,6 @@ export default function SettingsAppointments() {
   const PAGE_SIZE = 10;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  // Filtro local insensible a acentos
   const nq = normalize(q);
   const filtered = useMemo(() => {
     if (!nq) return appointments;
@@ -982,7 +928,6 @@ export default function SettingsAppointments() {
           </table>
         </div>
 
-        {/* Paginación */}
         <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-between">
           <button
             disabled={page === 1}

@@ -1,4 +1,4 @@
-// src/views/servicesViews/AppointmentView.jsx
+// src/components/appointments/Appointments.jsx
 import { useNavigate } from "react-router-dom";
 import { MAX_SERVICES_SELECTION } from "@/data/index";
 import Appointment from "@/components/appointments/Appointment";
@@ -40,7 +40,7 @@ export default function Appointments() {
     let services;
 
     if (payloadOrDate instanceof Date) {
-      date = payloadOrDate; // legado
+      date = payloadOrDate;
       services = selectedServices.map((s) => s._id);
     } else if (payloadOrDate && typeof payloadOrDate === "object") {
       date = payloadOrDate.date;
@@ -50,33 +50,24 @@ export default function Appointments() {
       return;
     }
 
-    // duración (preferir la que viene del hijo)
     const duration =
       payloadOrDate && payloadOrDate.duration != null
         ? Number(payloadOrDate.duration) || 0
         : totalDuration;
 
-    // normalizar fecha a Date válida
     const dateObj = date instanceof Date ? date : new Date(date);
     if (Number.isNaN(dateObj.getTime())) {
       toast.error("Fecha inválida");
       return;
     }
 
-    // normalizar services a IDs
     const serviceIds =
       Array.isArray(services) && services.length > 0
         ? services
         : selectedServices.map((s) => s._id);
 
-    // Crear la cita
     createAppointment(
-      {
-        services: serviceIds,
-        date: dateObj,
-        duration,
-        notes: "",
-      },
+      { services: serviceIds, date: dateObj, duration, notes: "" },
       {
         onSuccess: () => {
           setAppointmentDetails({
@@ -115,14 +106,12 @@ export default function Appointments() {
         setSelectedServices((prev) => prev.filter((s) => s._id !== id))
       }
       onConfirm={handleConfirmAppointment}
-      startHour={settings.startHour}
-      endHour={settings.endHour}
       interval={settings.interval}
-      lunchStart={settings.lunchStart}
-      lunchEnd={settings.lunchEnd}
       maxMonthsAhead={settings.maxMonthsAhead}
-      workingDays={settings.workingDays}
       appointments={appointments}
+      dayBlocks={settings.dayBlocks}
+      closedDates={settings.closedDates || []}
+      staffCount={settings.staffCount}
     />
   );
 }
