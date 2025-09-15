@@ -18,20 +18,25 @@ export default function AppointmentSettings() {
   const [interval, setInterval] = useState(30);
   const [maxMonthsAhead, setMaxMonthsAhead] = useState(2);
   const [timezone, setTimezone] = useState("Europe/Madrid");
-  const [closedDates, setClosedDates] = useState([]);
+  const [dayBlocks, setDayBlocks] = useState(null);
+
   const { staffCount } = useAppointmentContext();
 
-  const [dayBlocks, setDayBlocks] = useState(null);
+  // NUEVO: texto libre para edición de fechas cerradas con comas
+  const [closedDatesText, setClosedDatesText] = useState(""); // NUEVO
 
   useEffect(() => {
     if (settings) {
       setInterval(settings.interval);
       setMaxMonthsAhead(settings.maxMonthsAhead);
       setTimezone(settings.timezone || "Europe/Madrid");
-      setClosedDates(
-        Array.isArray(settings.closedDates) ? settings.closedDates : []
-      );
       setDayBlocks(settings.dayBlocks || null);
+      // NUEVO: sincroniza texto desde array del backend
+      setClosedDatesText(
+        Array.isArray(settings.closedDates)
+          ? settings.closedDates.join(",")
+          : "" // NUEVO
+      );
     }
   }, [settings]);
 
@@ -52,13 +57,20 @@ export default function AppointmentSettings() {
   }, [dayBlocks, previewDate, interval]);
 
   const handleSave = () => {
+    // NUEVO: parsea el texto a array válido YYYY-MM-DD
+    const closedDates = (closedDatesText || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .filter((s) => /^\d{4}-\d{2}-\d{2}$/.test(s)); // NUEVO
+
     const payload = {
       dayBlocks,
-      interval,
-      maxMonthsAhead,
+      interval: Number(interval) || 30,
+      maxMonthsAhead: Number(maxMonthsAhead) || 1,
       staffCount,
-      timezone,
-      closedDates,
+      timezone: String(timezone || "Europe/Madrid"),
+      closedDates, // NUEVO
     };
 
     saveSettings(payload, {
@@ -113,7 +125,6 @@ export default function AppointmentSettings() {
             className="w-full p-2 bg-white border border-gray-300 rounded-md text-gray-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
-
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
             Reservas permitidas (meses)
@@ -127,7 +138,6 @@ export default function AppointmentSettings() {
             className="w-full p-2 bg-white border border-gray-300 rounded-md text-gray-800"
           />
         </div>
-
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
             Zona horaria
@@ -140,26 +150,25 @@ export default function AppointmentSettings() {
             placeholder="Europe/Madrid"
           />
         </div>
-
+        {/* NUEVO: Campo de texto libre para fechas cerradas */}
         <div className="space-y-2">
+          {" "}
+          {/* NUEVO */}
           <label className="block text-sm font-medium text-gray-700">
-            Fechas cerradas (YYYY-MM-DD, separadas por coma)
+            Días no laborables (YYYY-MM-DD, separadas por coma)
           </label>
           <input
             type="text"
-            value={closedDates.join(",")}
-            onChange={(e) =>
-              setClosedDates(
-                e.target.value
-                  .split(",")
-                  .map((s) => s.trim())
-                  .filter((s) => /^\d{4}-\d{2}-\d{2}$/.test(s))
-              )
-            }
+            value={closedDatesText}
+            onChange={(e) => setClosedDatesText(e.target.value)}
             className="w-full p-2 bg-white border border-gray-300 rounded-md text-gray-800"
             placeholder="2025-12-25,2026-01-01"
           />
-        </div>
+          <p className="text-xs text-gray-500">
+            Ejemplo: 2025-12-25,2026-01-01. Se validan al guardar.
+          </p>
+        </div>{" "}
+        {/* NUEVO */}
       </div>
 
       {/* Previsualización */}

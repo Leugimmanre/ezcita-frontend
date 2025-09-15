@@ -29,22 +29,36 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full bg-white p-8 shadow-lg rounded-lg">
-        <h2 className="text-3xl font-extrabold text-gray-900 text-center mb-6">
-          Inicio de Sesión
-        </h2>
-        <LoginForm onSubmit={handleLoginSubmit} />
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      <div className="flex-grow flex items-center justify-center">
+        <div className="max-w-md w-full bg-white p-8 shadow-lg rounded-lg">
+          <h2 className="text-3xl font-extrabold text-gray-900 text-center mb-6">
+            Inicio de Sesión
+          </h2>
+          <LoginForm onSubmit={handleLoginSubmit} />
 
-        {/* <div className="mt-4 text-center">
-          <Link
-            to="/forgot-password"
-            className="text-blue-600 hover:underline text-sm"
-          >
-            ¿Olvidaste tu contraseña?
-          </Link>
-        </div> */}
+          {/* <div className="mt-4 text-center">
+            <Link
+              to="/forgot-password"
+              className="text-blue-600 hover:underline text-sm"
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </div> */}
+        </div>
       </div>
+
+      {/* Footer agregado */}
+      <footer className="py-4 bg-gray-50 border-t border-gray-100">
+        <div className="text-center text-gray-600 text-sm">
+          <p>
+            © {new Date().getFullYear()} EzCita. Todos los derechos reservados.
+          </p>
+          <p className="mt-1 text-blue-600 font-medium">
+            Gestionando tus citas de forma sencilla
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

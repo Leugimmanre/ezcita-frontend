@@ -60,11 +60,11 @@ export default function Appointment({
       const timeString = appointmentDate.toLocaleTimeString("es-ES", {
         hour: "2-digit",
         minute: "2-digit",
-        timeZone: timezone,
+        timeZone: timezone, // NUEVO (aprovechamos timezone)
       });
       setSelectedTime(timeString);
     }
-  }, [isEditing, appointmentToEdit, setSelectedServices, timezone]);
+  }, [isEditing, appointmentToEdit, setSelectedServices, timezone]); // NUEVO
 
   const totalPrice = selectedServices.reduce(
     (sum, s) => sum + Number(s.price ?? 0),
@@ -396,7 +396,7 @@ export default function Appointment({
                   "dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:focus:ring-blue-500"
                 }
                 placeholderText="Selecciona fecha y hora"
-                // NUEVO: filtrado SOLO avanzado
+                // SOLO avanzado
                 filterDate={(date) => {
                   const limit = new Date();
                   limit.setMonth(
@@ -438,7 +438,6 @@ export default function Appointment({
 
                     const isBooked = overlappingCount >= capacity;
 
-                    let disabled;
                     const hhmm = `${String(hourPart).padStart(2, "0")}:${String(
                       minutePart
                     ).padStart(2, "0")}`;
@@ -448,11 +447,24 @@ export default function Appointment({
                       totalDuration || interval,
                       { dayBlocks }
                     );
-                    disabled =
+
+                    // NUEVO: calcula disabled real y la razón para el tooltip
+                    const disabled =
                       noServices ||
                       dateWithTime < now ||
                       isBooked ||
-                      !fitsBlock;
+                      !fitsBlock; // NUEVO
+
+                    const reason = // NUEVO
+                      noServices
+                        ? "Selecciona al menos un servicio"
+                        : dateWithTime < now
+                        ? "Hora en el pasado"
+                        : isBooked
+                        ? "Franja ocupada"
+                        : !fitsBlock
+                        ? "No cabe en los bloques del día"
+                        : "";
 
                     const slotBase =
                       "text-center text-sm font-bold p-2 rounded-lg transition";
@@ -473,22 +485,15 @@ export default function Appointment({
                     return (
                       <button
                         key={hour}
+                        // NUEVO: deshabilitar de verdad el botón
+                        disabled={disabled} // NUEVO
                         onClick={() => {
-                          if (disabled) {
-                            toast.info(
-                              isBooked
-                                ? "Franja ocupada. Elige otra hora."
-                                : "Hora no disponible."
-                            );
-                            return;
-                          }
+                          if (disabled) return; // NUEVO: no hacer nada
                           setSelectedTime(hour);
                         }}
-                        className={
-                          classes + (disabled ? " pointer-events-auto" : "")
-                        }
+                        className={classes} // NUEVO: sin pointer-events-auto
                         aria-disabled={disabled}
-                        title={isBooked ? "Franja ocupada" : undefined}
+                        title={disabled ? reason : undefined} // NUEVO
                       >
                         {hour}
                       </button>
@@ -526,7 +531,7 @@ export default function Appointment({
                     day: "numeric",
                     month: "long",
                     year: "numeric",
-                    timeZone: timezone,
+                    timeZone: timezone, // NUEVO
                   })}{" "}
                   a las <span className="font-semibold">{selectedTime}</span>
                 </p>

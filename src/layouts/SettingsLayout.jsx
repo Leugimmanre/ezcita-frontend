@@ -104,23 +104,20 @@ const SettingsLayout = () => {
           <div className="px-4 py-4 border-t border-gray-200">
             <div className="flex items-center mb-3">
               <div className="flex-shrink-0">
-                <img
-                  className="h-10 w-10 rounded-full"
-                  src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                  alt=""
-                />
+                <UserCircleIcon className="h-10 w-10 rounded-full" />
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-700">Admin User</p>
+                <p className="text-sm font-medium text-gray-700">
+                  {isLoading ? "Cargando..." : user?.name || "Admin User"}
+                </p>
                 <Link
-                  to="#"
+                  to="/settings/profile"
                   className="text-xs font-medium text-gray-500 hover:text-gray-700"
                 >
                   Ver perfil
                 </Link>
               </div>
             </div>
-
             {/* Nuevos elementos: Mis citas y Cerrar sesión (móvil) */}
             <div className="space-y-2">
               <Link
