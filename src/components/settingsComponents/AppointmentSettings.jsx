@@ -2,7 +2,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useAppointmentSettings } from "@/hooks/useAppointmentSettings";
 import { toast } from "react-toastify";
-import SettingsStaff from "./SettingsStaff";
 import { useAppointmentContext } from "@/contexts/useAppointmentContext";
 import DayBlocksEditor from "./DayBlocksEditor";
 import { generateSlotsFromDayBlocks } from "@/utils/generateDaySlots";
@@ -54,7 +53,6 @@ export default function AppointmentSettings() {
 
   const handleSave = () => {
     const payload = {
-      // Enviamos solo avanzado
       dayBlocks,
       interval,
       maxMonthsAhead,
@@ -186,9 +184,6 @@ export default function AppointmentSettings() {
           </div>
         )}
       </div>
-
-      {/* Configuración de personal */}
-      <SettingsStaff />
 
       {/* Guardar */}
       <div className="flex justify-end mt-8">
