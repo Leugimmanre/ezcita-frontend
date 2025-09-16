@@ -160,6 +160,7 @@ export default function IdleLogoutProvider({
       "keydown",
       "scroll",
       "touchstart",
+      "wheel",
       "mousemove",
       "focus",
       "visibilitychange",
