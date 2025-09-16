@@ -1,5 +1,5 @@
 // src/layouts/SettingsLayout.jsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Link,
   Navigate,
@@ -16,6 +16,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { navigation } from "../data";
 import { useAuthUser } from "@/hooks/useAuthUser";
+import { getBrandSettings } from "@/services/brandApi";
 
 const SettingsLayout = () => {
   // Estado para el sidebar móvil
@@ -24,6 +25,27 @@ const SettingsLayout = () => {
   const navigate = useNavigate();
   const { user, isLoading } = useAuthUser();
 
+  // Estado local para la marca
+  const [brandName, setBrandName] = useState("EZCita");
+
+  // Cargar ajustes de marca al montar
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const data = await getBrandSettings();
+        if (!mounted) return;
+        setBrandName(data?.brandName || "EZCita");
+      } catch {
+        // Silenciar error y dejar fallback
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Redirigir si no es admin
   const userData = JSON.parse(localStorage.getItem("user_EzCita"));
 
   if (!userData || userData.role !== "admin") {
@@ -73,7 +95,7 @@ const SettingsLayout = () => {
           <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
             <div className="flex items-center flex-shrink-0 px-4">
               <div className="w-auto h-8 text-2xl font-bold text-indigo-600">
-                EZCita
+                {brandName}
               </div>
             </div>
             <nav className="px-2 mt-5 space-y-1">
@@ -144,7 +166,7 @@ const SettingsLayout = () => {
         <div className="flex flex-col flex-grow pt-5 bg-white border-r border-gray-200 overflow-y-auto">
           <div className="flex items-center flex-shrink-0 px-4">
             <div className="w-auto h-8 text-2xl font-bold text-indigo-600">
-              EZCita
+              {brandName}
             </div>
           </div>
           <div className="mt-5 flex-grow flex flex-col">
