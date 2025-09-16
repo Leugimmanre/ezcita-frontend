@@ -88,7 +88,7 @@ export const navigation = [
   },
   {
     name: "Legales",
-    href: "/legal",
+    href: "/settings/legal",
     icon: ShieldCheckIcon,
     current: location.pathname.includes("/settings/legal"),
   },
