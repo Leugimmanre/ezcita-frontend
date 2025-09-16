@@ -96,3 +96,41 @@ export const getAvailability = async (date, excludeId) => {
   });
   return data;
 };
+
+// Obtener histórico (completadas)
+export const getAppointmentsHistory = async ({
+  page = 1,
+  limit = 10,
+  startDate,
+  endDate,
+} = {}) => {
+  const params = { page: Number(page), limit: Number(limit) };
+  if (startDate && endDate) {
+    params.startDate = startDate;
+    params.endDate = endDate;
+  }
+  const { data } = await api.get("/appointments/history", { params });
+  return data; // { total, page, limit, appointments }
+};
+
+// Obtener todas las citas en un rango (paginado internamente)
+export const getAllAppointmentsInRange = async ({
+  startDate,
+  endDate,
+  pageSize = 100,
+}) => {
+  let page = 1;
+  let all = [];
+  while (true) {
+    const { data } = await api.get("/appointments/statistics", {
+      params: { page, limit: pageSize, startDate, endDate },
+    });
+    const pageItems = data?.appointments || [];
+    all = all.concat(pageItems);
+    const total = data?.total || 0;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    if (page >= totalPages) break;
+    page += 1;
+  }
+  return all;
+};

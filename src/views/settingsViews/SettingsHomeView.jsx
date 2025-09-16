@@ -7,7 +7,7 @@ import { useBrandName } from "@/hooks/useBrandName";
 export default function SettingsHomeView() {
   // Título dinámico
   const { brandName } = useBrandName(APP_NAME);
-  useDocumentTitle(`Dashboard | ${brandName}`);
+  useDocumentTitle(`Configuración | ${brandName}`);
 
   return <SettingsHome />;
 }

@@ -15,7 +15,7 @@ export default function Login() {
       // Guardar datos del usuario para AppLayout
       localStorage.setItem("user_EzCita", JSON.stringify(userData));
 
-      toast.success(`Bienvenida/o ${userData.name} ${userData.lastname}`);
+      toast.success(`¡Hola ${userData.name} ${userData.lastname}! Es un placer verte de nuevo.`);
 
       // Redirigir según el rol
       if (userData.role === "admin") {

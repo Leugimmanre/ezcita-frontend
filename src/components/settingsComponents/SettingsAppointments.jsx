@@ -16,7 +16,7 @@ import {
   getAvailability,
   updateAppointment,
 } from "@/services/appointmentsAPI";
-// NUEVO: solo utilitarios avanzados
+// Solo utilitarios avanzados
 import {
   generateSlotsFromDayBlocks,
   fitsAnyDayBlock,
@@ -187,7 +187,7 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
     return { duration, price };
   }, [selectedServices]);
 
-  // NUEVO: slots solo con dayBlocks
+  // Slots solo con dayBlocks
   const slots = useMemo(() => {
     if (!settings?.dayBlocks) return [];
     return generateSlotsFromDayBlocks(selectedDate, {
@@ -198,7 +198,7 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
 
   const staffCount = Number(settings?.staffCount) || 1;
 
-  // NUEVO: deshabilitado solo por reglas avanzadas
+  // Deshabilitado solo por reglas avanzadas
   const getSlotDisableInfo = (hhmm) => {
     if (!settings?.dayBlocks) return { disabled: true, reason: "no-settings" };
 

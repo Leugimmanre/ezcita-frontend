@@ -11,6 +11,8 @@ import {
   ShieldCheckIcon,
   BellIcon,
   BuildingOfficeIcon,
+  DocumentChartBarIcon,
+  ChartBarSquareIcon,
 } from "@heroicons/react/24/outline";
 
 // tenantId de  la aplicación
@@ -33,6 +35,12 @@ export const navigation = [
   {
     name: "Dashboard",
     href: "/settings",
+    icon: ChartBarSquareIcon,
+    // current: location.pathname === "/",
+  },
+  {
+    name: "Configuración",
+    href: "/settings/configurations",
     icon: CogIcon,
     // current: location.pathname === "/settings",
   },
@@ -72,6 +80,12 @@ export const navigation = [
     icon: BuildingOfficeIcon,
     // current: location.pathname.includes("/settings/brand"),
   },
+  {
+    name: "Histórico",
+    href: "/settings/history",
+    icon: DocumentChartBarIcon,
+    // current: location.pathname.includes("/settings/reports"),
+  },
   // {
   //   name: "Pagos",
   //   href: "/settings",
@@ -80,7 +94,7 @@ export const navigation = [
   // },
   // {
   //   name: "Reportes",
-  //   href: "/settings",
+  //   href: "/settings/reports",
   //   icon: ChartBarIcon,
   //   // current: location.pathname.includes("/settings/reports"),
   // },
@@ -100,6 +114,14 @@ export const navigation = [
 
 // Categorías de configuración para el panel de administración
 export const settingCategories = [
+  {
+    id: "dashboard",
+    title: "Dashboard",
+    description: "Estadisticas de la empresa",
+    icon: <ChartBarSquareIcon className="h-8 w-8 text-yellow-500" />,
+    path: "/settings",
+    color: "bg-yellow-50 text-yellow-700 hover:bg-yellow-100",
+  },
   {
     id: "horarios",
     title: "Horarios",
@@ -149,6 +171,14 @@ export const settingCategories = [
     path: "/settings/brand",
     color: "bg-purple-50 text-purple-700 hover:bg-purple-100",
   },
+  {
+    id: "historico",
+    title: "Histórico",
+    description: "Configura informes y análisis de negocio",
+    icon: <DocumentChartBarIcon className="h-8 w-8 text-indigo-500" />,
+    path: "/settings/history",
+    color: "bg-indigo-50 text-indigo-700 hover:bg-indigo-100",
+  },
   // {
   //   id: "pagos",
   //   title: "Pagos",
@@ -162,7 +192,7 @@ export const settingCategories = [
   //   title: "Reportes",
   //   description: "Configura informes y análisis de negocio",
   //   icon: <ChartBarIcon className="h-8 w-8 text-indigo-500" />,
-  //   path: "/settings",
+  //   path: "/settings/reports",
   //   color: "bg-indigo-50 text-indigo-700 hover:bg-indigo-100",
   // },
   // {

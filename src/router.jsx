@@ -27,6 +27,9 @@ import SettingsServicesView from "@/views/settingsViews/SettingsServicesView";
 import BrandSettingsPageView from "./views/authViews/BrandSettingsPageView";
 import UserDetailsView from "./views/usersView/UserDetailsView";
 import MyProfileView from "./views/usersView/MyProfileView";
+import MyAppointmentsHistoryView from "./views/appointments/MyAppointmentsHistoryView";
+import AdminMyAppointmentsHistoryView from "./views/settingsViews/AdminMyAppointmentsHistoryView";
+import AdminStatsDashboardView from "./views/settingsViews/AdminStatsDashboardView";
 
 export const router = createBrowserRouter([
   // Auth (solo para invitados)
@@ -71,6 +74,7 @@ export const router = createBrowserRouter([
         element: <AppointmentsLayout />,
         children: [{ index: true, element: <MyAppointmentsView /> }],
       },
+      { path: "history", element: <MyAppointmentsHistoryView /> },
     ],
   },
 
@@ -82,15 +86,17 @@ export const router = createBrowserRouter([
       {
         element: <SettingsLayout />,
         children: [
-          { index: true, element: <SettingsHomeView /> },
+          { index: true, element: <AdminStatsDashboardView /> },
+          { path: "configurations", element: <SettingsHomeView /> },
           { path: "generate-time-slots", element: <GenerateTimeSlotsView /> },
           { path: "services", element: <SettingsServicesView /> },
           { path: "staff", element: <SettingsStaffView /> },
           { path: "appointments", element: <SettingsAppointmentsView /> },
           { path: "users", element: <UsersView /> },
           { path: "users/:id", element: <UserDetailsView /> },
-          { path: "brand", element: <BrandSettingsPageView />, },
-          { path: "profile", element: <MyProfileView />, },
+          { path: "brand", element: <BrandSettingsPageView /> },
+          { path: "profile", element: <MyProfileView /> },
+          { path: "history", element: <AdminMyAppointmentsHistoryView /> },
         ],
       },
     ],

@@ -22,8 +22,8 @@ export default function AppointmentSettings() {
 
   const { staffCount } = useAppointmentContext();
 
-  // NUEVO: texto libre para edición de fechas cerradas con comas
-  const [closedDatesText, setClosedDatesText] = useState(""); // NUEVO
+  // Texto libre para edición de fechas cerradas con comas
+  const [closedDatesText, setClosedDatesText] = useState("");
 
   useEffect(() => {
     if (settings) {
@@ -31,11 +31,11 @@ export default function AppointmentSettings() {
       setMaxMonthsAhead(settings.maxMonthsAhead);
       setTimezone(settings.timezone || "Europe/Madrid");
       setDayBlocks(settings.dayBlocks || null);
-      // NUEVO: sincroniza texto desde array del backend
+      // Sincroniza texto desde array del backend
       setClosedDatesText(
         Array.isArray(settings.closedDates)
           ? settings.closedDates.join(",")
-          : "" // NUEVO
+          : ""
       );
     }
   }, [settings]);
@@ -57,12 +57,12 @@ export default function AppointmentSettings() {
   }, [dayBlocks, previewDate, interval]);
 
   const handleSave = () => {
-    // NUEVO: parsea el texto a array válido YYYY-MM-DD
+    // Parsea el texto a array válido YYYY-MM-DD
     const closedDates = (closedDatesText || "")
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean)
-      .filter((s) => /^\d{4}-\d{2}-\d{2}$/.test(s)); // NUEVO
+      .filter((s) => /^\d{4}-\d{2}-\d{2}$/.test(s));
 
     const payload = {
       dayBlocks,
@@ -70,7 +70,7 @@ export default function AppointmentSettings() {
       maxMonthsAhead: Number(maxMonthsAhead) || 1,
       staffCount,
       timezone: String(timezone || "Europe/Madrid"),
-      closedDates, // NUEVO
+      closedDates,
     };
 
     saveSettings(payload, {

@@ -182,6 +182,12 @@ export default function AppLayout() {
               >
                 Nueva Cita
               </Link>
+              <Link
+                to="/appointments/history"
+                className="px-4 py-4 sm:py-2 bg-blue-700 hover:bg-blue-800 text-white uppercase text-sm text-center font-semibold rounded-lg transition"
+              >
+                Histórico
+              </Link>
             </nav>
           </div>
         </header>

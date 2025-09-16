@@ -6,7 +6,6 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { es } from "date-fns/locale";
 import { registerLocale } from "react-datepicker";
-// NUEVO: solo utils avanzados
 import {
   generateSlotsFromDayBlocks,
   fitsAnyDayBlock,
@@ -24,7 +23,6 @@ export default function Appointment({
   onConfirm = () => {},
   isEditing = false,
   appointmentToEdit = null,
-  // NUEVO: solo avanzado
   interval = 30,
   maxMonthsAhead = 1,
   appointments = [],
@@ -42,7 +40,7 @@ export default function Appointment({
     return nextHour;
   });
   const { staffCount: ctxStaffCount } = useAppointmentContext();
-  const capacity = Number(staffCountProp ?? ctxStaffCount ?? 1); // NUEVO
+  const capacity = Number(staffCountProp ?? ctxStaffCount ?? 1);
 
   const { data: allServices = [] } = useQuery({
     queryKey: ["services"],
@@ -60,11 +58,11 @@ export default function Appointment({
       const timeString = appointmentDate.toLocaleTimeString("es-ES", {
         hour: "2-digit",
         minute: "2-digit",
-        timeZone: timezone, // NUEVO (aprovechamos timezone)
+        timeZone: timezone,
       });
       setSelectedTime(timeString);
     }
-  }, [isEditing, appointmentToEdit, setSelectedServices, timezone]); // NUEVO
+  }, [isEditing, appointmentToEdit, setSelectedServices, timezone]);
 
   const totalPrice = selectedServices.reduce(
     (sum, s) => sum + Number(s.price ?? 0),
@@ -448,14 +446,14 @@ export default function Appointment({
                       { dayBlocks }
                     );
 
-                    // NUEVO: calcula disabled real y la razón para el tooltip
+                    // Calcula disabled real y la razón para el tooltip
                     const disabled =
                       noServices ||
                       dateWithTime < now ||
                       isBooked ||
-                      !fitsBlock; // NUEVO
+                      !fitsBlock;
 
-                    const reason = // NUEVO
+                    const reason =
                       noServices
                         ? "Selecciona al menos un servicio"
                         : dateWithTime < now
@@ -485,15 +483,15 @@ export default function Appointment({
                     return (
                       <button
                         key={hour}
-                        // NUEVO: deshabilitar de verdad el botón
-                        disabled={disabled} // NUEVO
+                        // Deshabilitar de verdad el botón
+                        disabled={disabled}
                         onClick={() => {
-                          if (disabled) return; // NUEVO: no hacer nada
+                          if (disabled) return;
                           setSelectedTime(hour);
                         }}
-                        className={classes} // NUEVO: sin pointer-events-auto
+                        className={classes}
                         aria-disabled={disabled}
-                        title={disabled ? reason : undefined} // NUEVO
+                        title={disabled ? reason : undefined}
                       >
                         {hour}
                       </button>
@@ -531,7 +529,7 @@ export default function Appointment({
                     day: "numeric",
                     month: "long",
                     year: "numeric",
-                    timeZone: timezone, // NUEVO
+                    timeZone: timezone,
                   })}{" "}
                   a las <span className="font-semibold">{selectedTime}</span>
                 </p>
