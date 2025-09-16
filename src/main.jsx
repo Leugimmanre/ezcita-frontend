@@ -11,6 +11,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { getTenantId, setTenantId } from "./utils/tenantStorage";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import IdleLogoutProvider from "./contexts/IdleLogoutProvider";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,7 +45,10 @@ createRoot(document.getElementById("root")).render(
               draggable
               pauseOnHover
             />
-            <RouterProvider router={router} />
+            {/* 1 hora de inactividad */}
+            <IdleLogoutProvider timeoutMs={60 * 60 * 1000} warnMs={60 * 1000}>
+              <RouterProvider router={router} />
+            </IdleLogoutProvider>
           </TenantProvider>
         </AppointmentProvider>
       </ThemeProvider>

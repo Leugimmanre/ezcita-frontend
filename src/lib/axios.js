@@ -1,27 +1,21 @@
 // src/lib/axios.js
 import axios from "axios";
-import { getToken, clearToken } from "@/utils/authStorage";
+import { getToken } from "@/utils/authStorage";
 import { getTenantId, setTenantId } from "@/utils/tenantStorage";
-import { clearStoredUser } from "@/utils/userStorage";
+import { forceLogout, getSessionKeys } from "@/utils/authSession"; // ⬅️ usar logout centralizado
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? "/api",
-  headers: {
-    Accept: "application/json",
-  },
+  headers: { Accept: "application/json" },
   timeout: 30000,
 });
 
-// ─────────────────────────────────────────────────────────────
-// Request: añade Authorization y x-tenant-id (con fallback)
-// ─────────────────────────────────────────────────────────────
+// ── Request: Authorization, x-tenant-id y marcar actividad ───────────────
 api.interceptors.request.use(
   (config) => {
-    // Token de autenticación
     const token = getToken();
     if (token) config.headers.Authorization = `Bearer ${token}`;
 
-    // Tenant: primero localStorage; si no hay, usa .env y persiste
     let tenantId = getTenantId();
     if (!tenantId) {
       tenantId = import.meta.env.VITE_TENANT_ID || "default";
@@ -32,45 +26,47 @@ api.interceptors.request.use(
       }
     }
     if (tenantId) config.headers["x-tenant-id"] = tenantId;
-    // Si es FormData, NO fijes Content-Type (deja que el navegador ponga el boundary)
+
+    // Si es FormData, deja que el navegador ponga el boundary
     const isFormData =
       typeof FormData !== "undefined" && config.data instanceof FormData;
-
     if (isFormData) {
-      // Axios v1 usa AxiosHeaders; soporta .delete/.set
       if (typeof config.headers?.delete === "function") {
         config.headers.delete("Content-Type");
       } else if (config.headers && config.headers["Content-Type"]) {
         delete config.headers["Content-Type"];
       }
     }
+
+    // Marca actividad (útil para vistas sin interacción)
+    try {
+      const { activityKey, channelName } = getSessionKeys();
+      const now = Date.now();
+      localStorage.setItem(activityKey, String(now));
+      if ("BroadcastChannel" in window) {
+        const ch = new BroadcastChannel(channelName);
+        ch.postMessage({ type: "ACTIVITY", stamp: now });
+        ch.close();
+      }
+    } catch {
+      // noop
+    }
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// ─────────────────────────────────────────────────────────────
-// Response: manejo global de 401/403
-// ─────────────────────────────────────────────────────────────
+// ── Response: 401 -> logout global, 403 -> redirigir a mis citas ─────────
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error?.response?.status;
 
-    // 401: token inválido/expirado -> limpiar sesión y mandar a login
     if (status === 401) {
-      try {
-        clearToken();
-        clearStoredUser();
-      } catch {
-        // noop
-      }
-      if (typeof window !== "undefined" && window.location.pathname !== "/") {
-        window.location.assign("/");
-      }
+      // Usa el logout centralizado (sin duplicar lógica)
+      forceLogout("auth");
     }
 
-    // 403: sin permisos (p.ej. no admin intentando entrar a /settings)
     if (status === 403) {
       if (
         typeof window !== "undefined" &&
