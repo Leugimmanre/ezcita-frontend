@@ -642,19 +642,23 @@ export default function RegisterForm({ onSubmit, loading }) {
         <div className="ml-3 text-sm">
           <label htmlFor="terms" className="text-gray-700">
             Acepto los{" "}
-            <Link
-              to="#"
+            <a
+              href="/legal/terms"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-indigo-600 hover:text-indigo-800 font-medium"
             >
               Términos y Condiciones
-            </Link>{" "}
+            </a>{" "}
             y la{" "}
-            <Link
-              to="#"
+            <a
+              href="/legal/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-indigo-600 hover:text-indigo-800 font-medium"
             >
               Política de Privacidad
-            </Link>
+            </a>
           </label>
           {errors.terms && (
             <div className="mt-1 flex items-start">

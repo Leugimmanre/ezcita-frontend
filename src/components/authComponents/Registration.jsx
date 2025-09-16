@@ -74,7 +74,7 @@ export default function Registration() {
 
         <RegisterForm onSubmit={handleRegistrationSubmit} loading={loading} />
 
-        <div className="mt-6 text-center text-sm text-gray-500">
+        {/* <div className="mt-6 text-center text-sm text-gray-500">
           <p>
             Al registrarte, aceptas nuestras{" "}
             <Link
@@ -94,7 +94,7 @@ export default function Registration() {
             </Link>
             .
           </p>
-        </div>
+        </div> */}
       </div>
     </div>
   );

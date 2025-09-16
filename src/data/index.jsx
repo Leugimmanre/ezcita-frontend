@@ -86,11 +86,17 @@ export const navigation = [
     icon: DocumentChartBarIcon,
     // current: location.pathname.includes("/settings/reports"),
   },
+  {
+    name: "Legales",
+    href: "/legal",
+    icon: ShieldCheckIcon,
+    current: location.pathname.includes("/settings/legal"),
+  },
   // {
   //   name: "Pagos",
   //   href: "/settings",
   //   icon: CreditCardIcon,
-  //   // current: location.pathname.includes("/settings/payments"),
+  //   current: location.pathname.includes("/settings/payments"),
   // },
   // {
   //   name: "Reportes",
@@ -152,7 +158,7 @@ export const settingCategories = [
     description: "Personaliza reglas de reservas y recordatorios",
     icon: <CalendarIcon className="h-8 w-8 text-red-500" />,
     path: "/settings/appointments",
-    color: "bg-red-50 text-red-700 hover:bg-red-100",
+    color: "bg-indigo-50 text-indigo-700 hover:bg-indigo-100",
   },
   {
     id: "usuarios",
@@ -160,7 +166,7 @@ export const settingCategories = [
     description: "Personaliza reglas de reservas y recordatorios",
     icon: <UserIcon className="h-8 w-8 text-blue-500" />,
     path: "/settings/users",
-    color: "bg-blue-50 text-blue-700 hover:bg-blue-100",
+    color: "bg-gray-50 text-gray-700 hover:bg-gray-100",
   },
   {
     id: "empresa",
@@ -169,7 +175,7 @@ export const settingCategories = [
       "Gestiona la información de tu empresa, logo y detalles de marca",
     icon: <BuildingOfficeIcon className="h-8 w-8 text-purple-500" />,
     path: "/settings/brand",
-    color: "bg-purple-50 text-purple-700 hover:bg-purple-100",
+    color: "bg-pink-50 text-pink-700 hover:bg-pink-100",
   },
   {
     id: "historico",
@@ -177,7 +183,15 @@ export const settingCategories = [
     description: "Configura informes y análisis de negocio",
     icon: <DocumentChartBarIcon className="h-8 w-8 text-indigo-500" />,
     path: "/settings/history",
-    color: "bg-indigo-50 text-indigo-700 hover:bg-indigo-100",
+    color: "bg-orange-50 text-orange-700 hover:bg-orange-100",
+  },
+  {
+    id: "legales",
+    title: "Legales",
+    description: "Configura métodos de pago y facturación",
+    icon: <ShieldCheckIcon className="h-8 w-8 text-yellow-500" />,
+    path: "/settings/legal",
+    color: "bg-red-50 text-red-700 hover:bg-red-100",
   },
   // {
   //   id: "pagos",

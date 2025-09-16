@@ -1,0 +1,220 @@
+Términos y Condiciones de Uso
+
+Fecha de entrada en vigor: [DD/MM/AAAA]
+Titular del servicio: [NOMBRE LEGAL DE LA EMPRESA] (en adelante, “[Nombre Comercial / EzCita]”)
+NIF/CIF: [CIF/NIF]
+Domicilio: [Dirección completa]
+Email de contacto: [tu-email@dominio.com
+]
+Sitio/Aplicación: [https://tu-dominio.com
+] (“la Plataforma”)
+
+1. Objeto
+
+Estos Términos regulan el acceso y uso de la Plataforma de [EzCita], que permite la gestión de citas entre negocios y usuarios finales, incluyendo creación, modificación y cancelación de citas, recordatorios y otras funciones asociadas.
+
+2. Aceptación
+
+Al registrarte, acceder o usar la Plataforma, aceptas estos Términos y nuestra Política de Privacidad. Si no estás de acuerdo, no utilices la Plataforma.
+
+3. Cuenta y registro
+
+Debes proporcionar información veraz y mantenerla actualizada.
+
+Eres responsable de la confidencialidad de tus credenciales y del uso que se haga de tu cuenta.
+
+Debes notificarnos cualquier acceso no autorizado.
+
+4. Uso permitido
+
+Te comprometes a:
+
+Usar la Plataforma de conformidad con la ley, estos Términos y la buena fe.
+
+No realizar usos que puedan dañar, inutilizar o sobrecargar la Plataforma (p. ej., scraping, ataques, automatizaciones no autorizadas).
+
+No suplantar a terceros ni publicar contenido ilícito.
+
+5. Funcionalidades de citas
+
+La creación, modificación y cancelación de citas está sujeta a las reglas configuradas por cada negocio (horarios, políticas de cancelación, etc.).
+
+[EzCita] no es responsable de la disponibilidad real de los servicios de los negocios ni de la ejecución de las citas. La relación del servicio prestado es entre el negocio y el usuario final.
+
+6. Planes, pagos y facturación (si aplica)
+
+Algunos planes o funciones pueden ser de pago (p. ej., suscripciones).
+
+La pasarela de pago (p. ej., Stripe) procesará los pagos con sus propios términos. [EzCita] no almacena datos completos de tarjeta.
+
+Los importes, facturación, renovaciones y cancelaciones se regirán por la información mostrada en el proceso de compra y/o en tu área de cliente.
+
+7. Comunicaciones
+
+Podemos enviarte notificaciones (email, SMS, push) relacionadas con tu cuenta o citas. Puedes gestionar preferencias donde corresponda. Las comunicaciones contractuales o de servicio pueden ser necesarias para el funcionamiento de la Plataforma.
+
+8. Propiedad intelectual
+
+La Plataforma, su código, diseño y marcas son titularidad de [EzCita/Empresa] o de sus licenciantes.
+
+Te concedemos una licencia limitada, no exclusiva e intransferible para usar la Plataforma conforme a estos Términos.
+
+Queda prohibida la ingeniería inversa, reproducción o distribución no autorizada.
+
+9. Servicios de terceros
+
+La Plataforma puede integrarse con servicios de terceros (alojamiento, emails, pasarelas de pago, almacenamiento de archivos, analítica, etc.). No nos responsabilizamos de la disponibilidad o funcionamiento de dichos servicios, que se regirán por sus propios términos.
+
+10. Disponibilidad y soporte
+
+Intentamos que la Plataforma esté disponible de forma continua, pero no garantizamos la ausencia de interrupciones. Podemos realizar mantenimiento o mejoras sin previo aviso. Ofrecemos soporte en [tu-email@dominio.com
+] o los canales indicados.
+
+11. Garantías y responsabilidad
+
+La Plataforma se ofrece “tal cual”. En la medida permitida por la ley, excluimos garantías sobre idoneidad para un propósito particular o ausencia de errores.
+[EzCita] no responde de daños indirectos, lucro cesante o pérdidas de datos derivadas del uso de la Plataforma.
+Nada de lo anterior limita la responsabilidad en caso de dolo o aquellas responsabilidades que la ley no permita excluir.
+
+12. Indemnidad
+
+Te comprometes a indemnizar y mantener indemne a [EzCita] frente a reclamaciones, daños o gastos derivados del uso indebido de la Plataforma o del incumplimiento de estos Términos.
+
+13. Suspensión y terminación
+
+Podemos suspender o cancelar tu cuenta si infringe estos Términos o si lo exige la ley. Puedes cancelar en cualquier momento desde tu cuenta o escribiendo a [tu-email@dominio.com
+].
+
+14. Cambios en los Términos
+
+Podemos modificar estos Términos. Te informaremos de cambios relevantes (por ejemplo, por email o en la Plataforma). Tu uso continuado tras la notificación implica aceptación.
+
+15. Ley aplicable y jurisdicción
+
+Estos Términos se rigen por la ley española. Para cualquier disputa, salvo normas imperativas, las partes se someten a los Juzgados y Tribunales de [Ciudad/Provincia].
+
+16. Contacto
+
+[Nombre legal] – [Nombre Comercial/EzCita]
+Email: [tu-email@dominio.com
+]
+Dirección: [Dirección]
+
+Política de Privacidad
+
+Fecha de entrada en vigor: [DD/MM/AAAA]
+Responsable del tratamiento: [NOMBRE LEGAL DE LA EMPRESA]
+NIF/CIF: [CIF/NIF]
+Domicilio: [Dirección]
+Email de privacidad: [privacy@dominio.com
+]
+Sitio/Aplicación: [https://tu-dominio.com
+]
+
+Esta Política cumple el RGPD (UE) y la LOPDGDD (España). Si operas fuera de la UE, añade requisitos locales (p. ej., CCPA/CPRA en California).
+
+1. Qué datos tratamos
+
+Identificativos y de contacto: nombre, apellidos, email, teléfono.
+
+Cuenta: credenciales (hash), rol, preferencias.
+
+Citas: negocio elegido, fecha/hora, estado, notas y metadatos de reserva.
+
+Comunicaciones: emails/SMS/avisos relativos a tu cuenta o citas.
+
+Técnicos: IP, dispositivo, logs, cookies o tecnologías similares.
+
+Facturación (si aplica): datos necesarios para pagos y facturas (a través de la pasarela; no almacenamos tarjeta completa).
+
+2. Finalidades y bases legales
+
+Prestación del servicio de citas (creación/gestión recordatorios): ejecución de contrato (art. 6.1.b RGPD).
+
+Atención al usuario y soporte: interés legítimo y/o contrato.
+
+Comunicaciones de servicio (recordatorios, cambios de cita): contrato.
+
+Comunicaciones comerciales (si las hay): consentimiento (opt-in) o interés legítimo conforme a normativa local (opción de opt-out).
+
+Seguridad, prevención de fraude y cumplimiento legal: interés legítimo y obligación legal.
+
+Analítica y mejora del servicio: interés legítimo (minimización y anonimización cuando sea posible).
+
+Pagos y facturación (si aplica): contrato y obligación legal.
+
+3. Roles (multi-tenant)
+
+Con los datos de los clientes de cada negocio (p. ej., la peluquería que usa EzCita), [EzCita] actúa como encargado del tratamiento; el negocio es el responsable.
+
+Con los datos de tu cuenta en EzCita (login, administración, suscripción al servicio), [EzCita] es responsable del tratamiento.
+
+Si eres negocio (cliente de EzCita), firmaremos un Acuerdo de Encargado del Tratamiento (DPA) con nuestras obligaciones y las tuyas como responsable.
+
+4. Cesiones y encargados
+
+Compartimos datos con proveedores que nos ayudan a operar la Plataforma, bajo contratos de encargo (art. 28 RGPD):
+
+Alojamiento/infraestructura: p. ej., Render/Heroku/Vercel (ajusta según uses).
+
+Front-end hosting/CDN: p. ej., Netlify.
+
+Emails/Notificaciones: p. ej., Mailtrap/Sendgrid/SES.
+
+Almacenamiento de archivos (p. ej., logos): p. ej., Cloudinary.
+
+Pasarela de pago: p. ej., Stripe (no almacenamos datos completos de tarjeta).
+
+Analítica (si la hay): p. ej., Plausible/Google Analytics (configura modo privacy).
+
+No vendemos datos personales.
+
+5. Transferencias internacionales
+
+Si alguno de nuestros proveedores está fuera del EEE, garantizamos un nivel de protección adecuado mediante:
+
+Decisiones de adecuación de la Comisión Europea, y/o
+
+Cláusulas Contractuales Tipo (SCCs) y medidas adicionales.
+
+6. Plazos de conservación
+
+Cuenta y citas: mientras tengas cuenta y/o exista relación contractual; luego, el tiempo necesario para atender responsabilidades legales.
+
+Facturación: plazos legales (p. ej., 5–6 años contables).
+
+Logs de seguridad: plazos breves y proporcionales.
+
+Comerciales: hasta revocar el consentimiento u oponerte.
+
+7. Derechos de las personas
+
+Puedes ejercer tus derechos RGPD: acceso, rectificación, supresión, oposición, limitación, portabilidad y a no ser objeto de decisiones automatizadas.
+Para ejercerlos: [privacy@dominio.com
+] (adjunta identificación si procede).
+También puedes reclamar ante la AEPD (España): www.aepd.es
+.
+
+8. Seguridad
+
+Aplicamos medidas técnicas y organizativas apropiadas (cifrado en tránsito, control de accesos, registro de eventos, tests, backups). Ningún sistema es 100% seguro; trabajamos para minimizar riesgos.
+
+9. Cookies y tecnologías similares
+
+Usamos cookies o tecnologías equivalentes para funciones esenciales (sesión, seguridad) y, si lo habilitas, para analítica o personalización.
+Mostramos un banner/gestor de consentimientos donde puedes configurarlas. Consulta la Política de Cookies para más detalle (tipos, duración, terceros).
+
+10. Menores
+
+La Plataforma no está dirigida a menores de 14 años. Si detectamos datos de un menor sin autorización válida, los eliminaremos.
+
+11. Cambios en la Política
+
+Podemos actualizar esta Política para reflejar cambios normativos o de servicio. Publicaremos la versión vigente e indicaremos la fecha de última actualización.
+
+12. Contacto de privacidad
+
+[Nombre legal / DPO si aplica]
+Email: [privacy@dominio.com
+]
+Dirección: [Dirección]

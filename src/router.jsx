@@ -24,14 +24,21 @@ import ProtectedRoute from "@/components/authComponents/ProtectedRoute";
 import GuestRoute from "@/components/authComponents/GuestRoute";
 import SupportView from "@/views/authViews/SupportView";
 import SettingsServicesView from "@/views/settingsViews/SettingsServicesView";
-import BrandSettingsPageView from "./views/authViews/BrandSettingsPageView";
-import UserDetailsView from "./views/usersView/UserDetailsView";
-import MyProfileView from "./views/usersView/MyProfileView";
-import MyAppointmentsHistoryView from "./views/appointments/MyAppointmentsHistoryView";
-import AdminMyAppointmentsHistoryView from "./views/settingsViews/AdminMyAppointmentsHistoryView";
-import AdminStatsDashboardView from "./views/settingsViews/AdminStatsDashboardView";
+import BrandSettingsPageView from "@/views/authViews/BrandSettingsPageView";
+import UserDetailsView from "@/views/usersView/UserDetailsView";
+import MyProfileView from "@/views/usersView/MyProfileView";
+import MyAppointmentsHistoryView from "@/views/appointments/MyAppointmentsHistoryView";
+import AdminMyAppointmentsHistoryView from "@/views/settingsViews/AdminMyAppointmentsHistoryView";
+import AdminStatsDashboardView from "@/views/settingsViews/AdminStatsDashboardView";
+import TermsAndConditionsUseView from "./views/settingsViews/TermsAndConditionsUseView";
+import PrivacyPolicyView from "./views/settingsViews/PrivacyPolicyView";
+import AdminLegalEditorView from "./views/settingsViews/AdminLegalEditorView";
 
 export const router = createBrowserRouter([
+  // Páginas legales (públicas)
+  { path: "/legal/terms", element: <TermsAndConditionsUseView /> },
+  { path: "/legal/privacy", element: <PrivacyPolicyView /> },
+
   // Auth (solo para invitados)
   {
     path: "/",
@@ -97,6 +104,7 @@ export const router = createBrowserRouter([
           { path: "brand", element: <BrandSettingsPageView /> },
           { path: "profile", element: <MyProfileView /> },
           { path: "history", element: <AdminMyAppointmentsHistoryView /> },
+          { path: "legal", element: <AdminLegalEditorView /> },
         ],
       },
     ],
