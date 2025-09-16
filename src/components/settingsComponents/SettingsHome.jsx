@@ -5,6 +5,12 @@ import { settingCategories } from "@/data/index";
 import { Navigate, Outlet } from "react-router-dom";
 import { useRecentActivity } from "@/hooks/useActivity";
 import { timeAgo } from "@/utils/timeAgo";
+import { useState } from "react";
+import FAQModal from "./modals/FAQModal";
+import LiveSupportModal from "./modals/LiveSupportModal";
+import UserGuidesModal from "./modals/UserGuidesModal";
+
+// Importar componentes de modal
 
 export default function SettingsHome() {
   // Datos de actividad reciente
@@ -12,6 +18,12 @@ export default function SettingsHome() {
     useRecentActivity(8);
   const lastUpdateAt = data?.lastUpdateAt || null;
   const items = data?.items || [];
+
+  // Estados para controlar la apertura/cierre de modales
+  const [isFAQModalOpen, setIsFAQModalOpen] = useState(false);
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
+  const [isGuidesModalOpen, setIsGuidesModalOpen] = useState(false);
+
   // Verifica rol de usuario
   const userData = JSON.parse(localStorage.getItem("user_EzCita"));
   if (!userData || userData.role !== "admin") {
@@ -186,21 +198,24 @@ export default function SettingsHome() {
           </button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="border rounded-lg p-4">
+          {/* Tarjeta de Preguntas Frecuentes */}
+          <div
+            className="border rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setIsFAQModalOpen(true)}
+          >
             <div className="text-blue-500 mb-2">
               <svg
                 className="w-6 h-6"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
               >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth="2"
                   d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                ></path>
+                />
               </svg>
             </div>
             <h4 className="font-medium text-gray-900 mb-1">
@@ -210,21 +225,25 @@ export default function SettingsHome() {
               Encuentra respuestas a preguntas comunes
             </p>
           </div>
-          <div className="border rounded-lg p-4">
+
+          {/* Tarjeta de Soporte en Vivo */}
+          <div
+            className="border rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setIsSupportModalOpen(true)}
+          >
             <div className="text-green-500 mb-2">
               <svg
                 className="w-6 h-6"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
               >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth="2"
                   d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-                ></path>
+                />
               </svg>
             </div>
             <h4 className="font-medium text-gray-900 mb-1">Soporte en Vivo</h4>
@@ -232,21 +251,25 @@ export default function SettingsHome() {
               Chatea con nuestro equipo de soporte
             </p>
           </div>
-          <div className="border rounded-lg p-4">
+
+          {/* Tarjeta de Guías de Usuario */}
+          <div
+            className="border rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setIsGuidesModalOpen(true)}
+          >
             <div className="text-purple-500 mb-2">
               <svg
                 className="w-6 h-6"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
               >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth="2"
                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                ></path>
+                />
               </svg>
             </div>
             <h4 className="font-medium text-gray-900 mb-1">Guías de Usuario</h4>
@@ -256,6 +279,20 @@ export default function SettingsHome() {
           </div>
         </div>
       </div>
+
+      {/* Renderizar modales */}
+      <FAQModal
+        isOpen={isFAQModalOpen}
+        onClose={() => setIsFAQModalOpen(false)}
+      />
+      <LiveSupportModal
+        isOpen={isSupportModalOpen}
+        onClose={() => setIsSupportModalOpen(false)}
+      />
+      <UserGuidesModal
+        isOpen={isGuidesModalOpen}
+        onClose={() => setIsGuidesModalOpen(false)}
+      />
     </div>
   );
 }
