@@ -291,6 +291,9 @@ export default function SettingsServices() {
                 `Servicio "${serviceName}" actualizado correctamente`
               );
             }}
+            onCancel={() => {
+              setEditingService(null);
+            }}
             onError={() => {
               toast.error("Error al actualizar  el servicio");
             }}
