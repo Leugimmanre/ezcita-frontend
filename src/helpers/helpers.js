@@ -25,22 +25,18 @@ export const formatCurrency = (amount, currency = "EUR", decimals = 2) => {
 
 /**
  * Formatea una duración en minutos a un string legible
- * @param {number} minutes - Duración en minutos
- * @returns {string} - Duración formateada (ej: "1h 30min")
+ * @param {number|string|null|undefined} minutes - Duración en minutos
+ * @returns {string} - "1h 30min", "45 min" o "—" si no hay dato
  */
 export const formatDuration = (minutes) => {
-  if (minutes < 60) {
-    return `${minutes} min`;
-  }
+  const m = Number(minutes);
+  if (!Number.isFinite(m) || m < 0) return "—"; // <-- Fallback visible
 
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
+  if (m < 60) return `${m} min`;
 
-  if (remainingMinutes === 0) {
-    return `${hours}h`;
-  }
-
-  return `${hours}h ${remainingMinutes}min`;
+  const hours = Math.floor(m / 60);
+  const remaining = m % 60;
+  return remaining === 0 ? `${hours}h` : `${hours}h ${remaining}min`;
 };
 
 /**
