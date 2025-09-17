@@ -19,26 +19,49 @@ export default function EditServiceForm({
   onError,
   onCancel,
 }) {
-  const normalizeToAPIUnit = (u) => {
-    const v = String(u || "").toLowerCase();
-    if (["hour", "hours", "hora", "horas"].includes(v)) return "horas";
-    return "minutes";
+  // De minutos (persistido) a representación de UI
+  const minutesToUI = (mins) => {
+    const m = Number(mins) || 0;
+    if (m > 0 && m % 60 === 0) return { value: m / 60, unit: "horas" };
+    return { value: m, unit: "minutos" };
+  };
+
+  // De representación de UI a minutos (para guardar)
+  const uiToMinutes = (value, unit) => {
+    const n = Number(value) || 0;
+    return String(unit).toLowerCase() === "horas" ? n * 60 : n;
   };
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
+    reset,
   } = useForm({
     defaultValues: {
-      name: service.name,
-      price: service.price,
-      category: service.category,
-      description: service.description,
-      duration: service.duration,
-      durationUnit: normalizeToAPIUnit(service.durationUnit),
+      name: "",
+      price: 0,
+      category: "",
+      description: "",
+      duration: "",
+      durationUnit: "minutos",
     },
   });
+
+  // Cargar valores correctos cada vez que cambie el servicio
+  useEffect(() => {
+    if (!service) return;
+    const ui = minutesToUI(service.duration);
+    reset({
+      name: service.name ?? "",
+      price: service.price ?? 0,
+      category: service.category ?? "",
+      description: service.description ?? "",
+      duration: ui.value, // 120 -> 2  |  90 -> 90
+      durationUnit: ui.unit, // "horas" o "minutos" (ES, coincide con options)
+    });
+    setImages(service.images || []);
+  }, [service, reset]);
 
   const qc = useQueryClient();
 
@@ -132,10 +155,12 @@ export default function EditServiceForm({
 
   // Enviar formulario: actualiza datos y luego sube nuevas imágenes (si hay)
   const onSubmit = async (data) => {
+    const durationInMinutes = uiToMinutes(data.duration, data.durationUnit);
     const payload = {
       ...data,
-      price: parseFloat(data.price),
-      duration: parseInt(data.duration, 10),
+      price: Number(data.price) || 0,
+      duration: durationInMinutes, // guardamos en minutos
+      durationUnit: "minutos", // dejamos persistido en ES y normalizado
     };
     if (payload.category === "") delete payload.category;
 
