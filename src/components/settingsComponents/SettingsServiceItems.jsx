@@ -1,8 +1,7 @@
 // src/components/settingsComponents/SettingsServiceItems.jsx
 import React, { useState, useRef, useEffect } from "react";
-import Button from "@/components/ui/Button";
 import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { formatCurrency } from "@/helpers/helpers";
+import { formatCurrency, formatDuration } from "@/helpers/helpers";
 
 const SettingsServiceItems = ({ service, onEdit, onDelete }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -21,19 +20,6 @@ const SettingsServiceItems = ({ service, onEdit, onDelete }) => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-
-  // Formatear duración
-  const formatDuration = (duration, unit) => {
-    const totalMinutes =
-      unit === "horas" ? Number(duration) * 60 : Number(duration);
-
-    const h = Math.floor(totalMinutes / 60);
-    const m = totalMinutes % 60;
-
-    if (h === 0) return `${m} min`;
-    if (m === 0) return `${h}h`;
-    return `${h}h ${m}min`;
-  };
 
   return (
     <div className="p-4 bg-white hover:bg-gray-50 transition-colors">
@@ -70,7 +56,7 @@ const SettingsServiceItems = ({ service, onEdit, onDelete }) => {
             </div>
             <div className="text-sm text-gray-500">
               <span className="font-medium">Duración:</span>{" "}
-              {formatDuration(service.duration, service.durationUnit)}
+              {formatDuration(service.duration)}
             </div>
           </div>
         </div>

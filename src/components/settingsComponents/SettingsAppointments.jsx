@@ -21,6 +21,8 @@ import {
   generateSlotsFromDayBlocks,
   fitsAnyDayBlock,
 } from "@/utils/generateDaySlots";
+import { formatDuration } from "date-fns";
+import { formatCurrency } from "@/helpers/formatCurrency";
 
 const normalize = (s) =>
   (s ?? "")
@@ -425,7 +427,8 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
                       <div className="text-sm flex-1">
                         <div className="font-medium">{s.name}</div>
                         <div className="text-xs text-gray-600">
-                          {s.duration} min · {s.price} €
+                          {formatDuration(s.duration)} ·{" "}
+                          {formatCurrency(s.price)}
                         </div>
                       </div>
                     </label>
@@ -886,15 +889,16 @@ export default function SettingsAppointments() {
                     <td className="px-6 py-4">
                       {appt.services.map((s) => (
                         <div key={s._id} className="text-sm text-gray-700">
-                          {s.name} · {s.duration} min · {s.price}€
+                          {s.name} · {formatDuration(s.duration)} ·{" "}
+                          {formatCurrency(s.price)}
                         </div>
                       ))}
                     </td>
                     <td className="px-6 py-4 text-center">
-                      {appt.duration} min
+                      {formatDuration(appt.duration)}
                     </td>
                     <td className="px-6 py-4 text-center font-bold">
-                      {appt.totalPrice} €
+                      {formatCurrency(appt.totalPrice)}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span
