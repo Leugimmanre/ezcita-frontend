@@ -21,8 +21,8 @@ import {
   generateSlotsFromDayBlocks,
   fitsAnyDayBlock,
 } from "@/utils/generateDaySlots";
-import { formatDuration } from "date-fns";
 import { formatCurrency } from "@/helpers/formatCurrency";
+import { formatDuration } from "@/helpers/helpers";
 
 const normalize = (s) =>
   (s ?? "")
@@ -914,18 +914,10 @@ export default function SettingsAppointments() {
                       })}
                     </td>
                     <td className="px-6 py-4 text-center">
-                      +{" "}
-                      {formatDuration(
-                        appt?.duration ??
-                          (appt.services || []).reduce((sum, s) => {
-                            const cat = serviceMap.get(s._id);
-                            const d = Number(s?.duration ?? cat?.duration ?? 0);
-                            return Number.isFinite(d) ? sum + d : sum;
-                          }, 0)
-                      )}
+                      {formatDuration(appt.duration)}
                     </td>
                     <td className="px-6 py-4 text-center font-bold">
-                      {formatCurrency(appt?.totalPrice)}
+                      {formatCurrency(appt.totalPrice)}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span
