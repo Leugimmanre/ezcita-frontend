@@ -914,7 +914,15 @@ export default function SettingsAppointments() {
                       })}
                     </td>
                     <td className="px-6 py-4 text-center">
-                      {formatDuration(appt.duration)}
+                      {" "}
+                      {formatDuration(
+                        appt?.duration ??
+                          (appt.services || []).reduce((sum, s) => {
+                            const cat = serviceMap.get(s._id);
+                            const d = Number(s?.duration ?? cat?.duration ?? 0);
+                            return Number.isFinite(d) ? sum + d : sum;
+                          }, 0)
+                      )}
                     </td>
                     <td className="px-6 py-4 text-center font-bold">
                       {formatCurrency(appt.totalPrice)}
