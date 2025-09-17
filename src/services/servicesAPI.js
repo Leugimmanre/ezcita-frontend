@@ -5,9 +5,9 @@ import api from "@/lib/axios.js";
 const normalizeDurationUnitForAPI = (u) => {
   const v = String(u || "").toLowerCase();
   if (["min", "minute", "minutes", "minutos", "m", "min."].includes(v))
-    return "minutes";
-  if (["h", "hora", "hour", "hours"].includes(v)) return "houras";
-  return "minutes";
+    return "minutos";
+  if (["h", "hora", "horas", "hour", "hours"].includes(v)) return "horas";
+  return "minutos";
 };
 
 // Crear un nuevo servicio
@@ -19,7 +19,7 @@ export const createService = async (data) => {
     durationUnit: normalizeDurationUnitForAPI(data.durationUnit),
   };
   const { data: res } = await api.post("/services", payload);
-  return res;
+  return res?.data ?? res;
 };
 
 // Obtener todos los servicios
@@ -44,7 +44,7 @@ export const updateService = async (id, data) => {
     durationUnit: normalizeDurationUnitForAPI(data.durationUnit),
   };
   const { data: res } = await api.put(`/services/${id}`, payload);
-  return res;
+  return res?.data ?? res;
 };
 
 // Eliminar un servicio por ID

@@ -13,10 +13,15 @@ import Textarea from "@/components/ui/Textarea";
 import Select from "@/components/ui/Select";
 import { toast } from "react-toastify";
 
-export default function EditServiceForm({ service, onSuccess, onError }) {
+export default function EditServiceForm({
+  service,
+  onSuccess,
+  onError,
+  onCancel,
+}) {
   const normalizeToAPIUnit = (u) => {
     const v = String(u || "").toLowerCase();
-    if (["hour", "hours", "hora"].includes(v)) return "horas";
+    if (["hour", "hours", "hora", "horas"].includes(v)) return "horas";
     return "minutes";
   };
 
@@ -55,7 +60,6 @@ export default function EditServiceForm({ service, onSuccess, onError }) {
     mutationFn: (data) => updateService(service._id, data),
     onSuccess: (updated) => {
       qc.invalidateQueries(["services"]);
-      // Si el padre espera el nombre, mantenemos compatibilidad:
       onSuccess?.(updated.name);
       toast.success("Servicio actualizado");
     },
@@ -205,7 +209,7 @@ export default function EditServiceForm({ service, onSuccess, onError }) {
             label="Unidad"
             {...register("durationUnit")}
             options={[
-              { value: "minutes", label: "minutos" },
+              { value: "minutos", label: "minutos" },
               { value: "horas", label: "horas" },
             ]}
           />
@@ -299,11 +303,7 @@ export default function EditServiceForm({ service, onSuccess, onError }) {
       </div>
 
       <div className="flex justify-end pt-4 space-x-3">
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() => onSuccess?.(service.name)}
-        >
+        <Button type="button" variant="secondary" onClick={() => onCancel?.()}>
           Cancelar
         </Button>
         <Button

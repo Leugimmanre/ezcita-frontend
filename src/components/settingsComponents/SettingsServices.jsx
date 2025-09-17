@@ -5,7 +5,11 @@ import { toast } from "react-toastify";
 import { getServices, deleteService } from "@/services/servicesAPI";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
-import { PlusIcon, MagnifyingGlassIcon, FunnelIcon } from "@heroicons/react/24/outline";
+import {
+  PlusIcon,
+  MagnifyingGlassIcon,
+  FunnelIcon,
+} from "@heroicons/react/24/outline";
 import EditServiceForm from "@/components/settingsComponents/forms/EditServiceForm";
 import CreateServiceForm from "@/components/settingsComponents/forms/CreateServiceForm";
 import LoadingSkeleton from "@/components/ui/LoadingSkeleton";
@@ -42,16 +46,18 @@ export default function SettingsServices() {
   // Filtrar y ordenar servicios
   const filteredServices = useMemo(() => {
     let result = [...services];
-    
+
     // Filtrar por término de búsqueda (soporte para caracteres latinos)
     if (searchTerm) {
       const normalizedSearch = normalizeText(searchTerm);
-      result = result.filter(service => 
-        normalizeText(service.name).includes(normalizedSearch) ||
-        (service.description && normalizeText(service.description).includes(normalizedSearch))
+      result = result.filter(
+        (service) =>
+          normalizeText(service.name).includes(normalizedSearch) ||
+          (service.description &&
+            normalizeText(service.description).includes(normalizedSearch))
       );
     }
-    
+
     // Ordenar servicios
     result.sort((a, b) => {
       switch (sortOption) {
@@ -67,7 +73,7 @@ export default function SettingsServices() {
           return 0;
       }
     });
-    
+
     return result;
   }, [services, searchTerm, sortOption]);
 
@@ -99,7 +105,7 @@ export default function SettingsServices() {
             Administra los servicios de tu negocio
           </p>
         </div>
-        
+
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1 min-w-[200px]">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -113,7 +119,7 @@ export default function SettingsServices() {
               className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
-          
+
           <div className="flex gap-2">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -130,7 +136,7 @@ export default function SettingsServices() {
                 <option value="duration">Duración</option>
               </select>
             </div>
-            
+
             <Button
               onClick={() => setIsCreateModalOpen(true)}
               variant="primary"
@@ -149,7 +155,8 @@ export default function SettingsServices() {
             {filteredServices.length} de {services.length} servicios
             {searchTerm && (
               <span>
-                {" "}para "<strong>{searchTerm}</strong>"
+                {" "}
+                para "<strong>{searchTerm}</strong>"
               </span>
             )}
           </p>
@@ -228,25 +235,26 @@ export default function SettingsServices() {
       )}
 
       {/* Sin resultados de búsqueda */}
-      {!isLoading && !isError && services.length > 0 && filteredServices.length === 0 && (
-        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center shadow-sm">
-          <div className="mx-auto w-24 h-24 flex items-center justify-center rounded-full bg-gray-100 mb-4">
-            <MagnifyingGlassIcon className="h-12 w-12 text-gray-400" />
+      {!isLoading &&
+        !isError &&
+        services.length > 0 &&
+        filteredServices.length === 0 && (
+          <div className="bg-white rounded-lg border border-gray-200 p-8 text-center shadow-sm">
+            <div className="mx-auto w-24 h-24 flex items-center justify-center rounded-full bg-gray-100 mb-4">
+              <MagnifyingGlassIcon className="h-12 w-12 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No se encontraron servicios
+            </h3>
+            <p className="text-gray-500 mb-4">
+              No hay resultados para "<strong>{searchTerm}</strong>". Intenta
+              con otros términos de búsqueda.
+            </p>
+            <Button onClick={() => setSearchTerm("")} variant="secondary">
+              Limpiar búsqueda
+            </Button>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            No se encontraron servicios
-          </h3>
-          <p className="text-gray-500 mb-4">
-            No hay resultados para "<strong>{searchTerm}</strong>". Intenta con otros términos de búsqueda.
-          </p>
-          <Button
-            onClick={() => setSearchTerm("")}
-            variant="secondary"
-          >
-            Limpiar búsqueda
-          </Button>
-        </div>
-      )}
+        )}
 
       {/* Modales */}
       <Modal
