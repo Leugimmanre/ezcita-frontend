@@ -30,13 +30,11 @@ export const formatCurrency = (amount, currency = "EUR", decimals = 2) => {
  */
 export const formatDuration = (minutes) => {
   const m = Number(minutes);
-  if (!Number.isFinite(m) || m < 0) return "—"; // <-- Fallback visible
-
+  if (!Number.isFinite(m) || m < 0) return "—";
   if (m < 60) return `${m} min`;
-
-  const hours = Math.floor(m / 60);
-  const remaining = m % 60;
-  return remaining === 0 ? `${hours}h` : `${hours}h ${remaining}min`;
+  const h = Math.floor(m / 60);
+  const r = m % 60;
+  return r === 0 ? `${h}h` : `${h}h ${r}min`;
 };
 
 /**

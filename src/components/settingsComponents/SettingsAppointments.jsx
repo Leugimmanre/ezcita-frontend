@@ -436,8 +436,8 @@ function AppointmentFormModal({ isOpen, mode, initial, onClose, onSuccess }) {
                 })}
               </div>
               <div className="mt-2 text-xs text-gray-700 p-2 bg-blue-50 rounded-lg">
-                <b>Duración total:</b> {totals.duration} min ·{" "}
-                <b>Precio total:</b> {totals.price} €
+                <b>Duración total:</b> {formatDuration(totals.duration)} ·{" "}
+                <b>Precio total:</b> {formatCurrency(totals.price)}
               </div>
             </div>
 
@@ -698,6 +698,18 @@ export default function SettingsAppointments() {
     queryFn: () => getAppointments2({ page, limit: 10 }),
   });
 
+  // Catálogo de servicios para fallbacks (duración/precio)
+  const { data: serviceCatalog = [] } = useQuery({
+    queryKey: ["services-catalog-for-appointments"],
+    queryFn: getServices,
+  });
+  const serviceMap = useMemo(() => {
+    const m = new Map();
+    for (const s of serviceCatalog) m.set(s._id, s);
+    return m;
+  }, [serviceCatalog]);
+
+  // Refrescar datos
   const refreshData = async () => {
     await refetch();
     toast.success("Datos actualizados");
@@ -887,18 +899,33 @@ export default function SettingsAppointments() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      {appt.services.map((s) => (
-                        <div key={s._id} className="text-sm text-gray-700">
-                          {s.name} · {formatDuration(s.duration)} ·{" "}
-                          {formatCurrency(s.price)}
-                        </div>
-                      ))}
+                      {appt.services.map((s) => {
+                        const cat = serviceMap.get(s._id);
+                        const sDuration = s?.duration ?? cat?.duration ?? null;
+                        const sPrice = Number.isFinite(Number(s?.price))
+                          ? s.price
+                          : cat?.price;
+                        return (
+                          <div key={s._id} className="text-sm text-gray-700">
+                            {s.name} · {formatDuration(sDuration)} ·{" "}
+                            {formatCurrency(sPrice)}
+                          </div>
+                        );
+                      })}
                     </td>
                     <td className="px-6 py-4 text-center">
-                      {formatDuration(appt.duration)}
+                      +{" "}
+                      {formatDuration(
+                        appt?.duration ??
+                          (appt.services || []).reduce((sum, s) => {
+                            const cat = serviceMap.get(s._id);
+                            const d = Number(s?.duration ?? cat?.duration ?? 0);
+                            return Number.isFinite(d) ? sum + d : sum;
+                          }, 0)
+                      )}
                     </td>
                     <td className="px-6 py-4 text-center font-bold">
-                      {formatCurrency(appt.totalPrice)}
+                      {formatCurrency(appt?.totalPrice)}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span

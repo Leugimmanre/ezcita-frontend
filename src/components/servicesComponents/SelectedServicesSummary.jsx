@@ -93,7 +93,7 @@ export default function SelectedServicesSummary({
               <p className={serviceNameClass}>{service.name}</p>
               <p className={serviceDetailsClass}>
                 {formatCurrency(service.price)} •{" "}
-                {formatDuration(service.duration, service.durationUnit)}
+                {formatDuration(service.duration)}
               </p>
             </div>
             <Button

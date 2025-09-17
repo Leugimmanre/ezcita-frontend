@@ -8,6 +8,8 @@ import {
   CurrencyEuroIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
+import { formatDuration } from "@/helpers/helpers";
+import { formatCurrency } from "@/helpers/formatCurrency";
 
 export default function AdminAppointmentsHistory() {
   const { data, isLoading, isError, refetch } = useQuery({
@@ -316,7 +318,7 @@ export default function AdminAppointmentsHistory() {
                       {(a.services || []).map((s) => (
                         <div key={s._id} className="mb-1 last:mb-0">
                           <span className="font-medium">{s.name}</span> ·{" "}
-                          {s.duration} min · {s.price}€
+                          {formatDuration(s.duration)} · {formatCurrency(s.price)}
                         </div>
                       ))}
                     </td>
