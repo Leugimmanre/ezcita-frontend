@@ -74,7 +74,7 @@ export default function MyAppointments() {
   });
 
   // === Clases (estructura fija, colores por tema) ===
-  const containerClass = "max-w-6xl mx-auto px-4"; // mismo en ambos temas
+  const containerClass = "mt-2 max-w-6xl mx-auto px-4"; // mismo en ambos temas
 
   const headerClass = "text-center sm:text-left mb-8"; // misma separación en ambos
 

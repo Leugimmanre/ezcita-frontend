@@ -10,7 +10,7 @@ export default function MyAppointmentsHistory() {
   });
 
   // === Clases (estructura fija, colores por tema) ===
-  const containerClass = "max-auto mx-auto px-4";
+  const containerClass = "mt-2 max-auto mx-auto px-4";
 
   const headerClass = "text-center sm:text-left mb-8";
 
