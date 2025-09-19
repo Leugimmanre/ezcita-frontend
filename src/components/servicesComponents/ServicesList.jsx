@@ -101,7 +101,7 @@ export default function ServicesList() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-4">
       <div className="mb-8 text-center">
         <h2 className="text-2xl lg:text-4xl font-extrabold text-current transition-colors">
           Selecciona tus servicios

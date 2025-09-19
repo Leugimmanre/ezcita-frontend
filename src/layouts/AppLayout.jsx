@@ -73,7 +73,7 @@ export default function AppLayout() {
 
       {/* Contenido principal */}
       <div className="w-full md:w-2/3 px-4 sm:px-6 lg:px-10 py-6 overflow-y-auto app-surface flex flex-col">
-        <header className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start mb-6">
+        <header className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start mb-">
           <h1 className="text-3xl lg:text-5xl font-extrabold text-current transition-colors">
             {brandName}
           </h1>
