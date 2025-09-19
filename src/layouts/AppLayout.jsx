@@ -79,96 +79,103 @@ export default function AppLayout() {
           </h1>
 
           <div className="flex flex-col sm:items-end gap-4">
-            <div className="flex sm:flex-row items-start justify-between sm:items-center gap-3 bg-gray-100 dark:bg-gray-800 px-3 rounded-lg shadow-md">
-              {/* Botón de cambio de tema */}
-              <ThemeToggle />
-              <div className="text-left sm:text-right">
-                <p className="text-sm text-gray-700 dark:text-gray-300">
-                  Hola, {userName}
-                </p>
-              </div>
-              {/* Botón cambiar contraseña */}
-              <button
-                className="p-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer"
-                onClick={() => setShowPasswordModal(true)}
-                aria-label="Cambiar contraseña"
-                title="Cambiar contraseña"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </button>
-              {/* Botón de cierre de sesión con icono */}
-              <div className="relative">
-                <button
-                  className={`
-                              w-10 h-10 flex items-center justify-center rounded-full
-                              transition-all duration-300 cursor-pointer
-                              ${
-                                showLogoutConfirm
-                                  ? "scale-110 bg-red-100 dark:bg-gray-800"
-                                  : "bg-white dark:bg-gray-800"
-                              }
-                              shadow-md hover:shadow-lg
-                              text-gray-600 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400
-                              border border-gray-200 dark:border-gray-700
-                            `}
-                  aria-label="Cerrar sesión"
-                  onClick={() => setShowLogoutConfirm(!showLogoutConfirm)}
-                >
-                  <svg
-                    className={`w-5 h-5 transition-transform ${
-                      showLogoutConfirm ? "rotate-90 text-red-500" : ""
-                    }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                    />
-                  </svg>
-                </button>
+            <div className="flex flex-col sm:items-end gap-4">
+              <div className="flex flex-row items-center justify-between bg-gray-100 dark:bg-gray-800 px-3 py-2 rounded-lg shadow-md">
+                {/* Botón de cambio de tema */}
+                <ThemeToggle />
 
-                {/* Confirmación de cierre de sesión */}
-                {showLogoutConfirm && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl z-10 overflow-hidden border border-red-200 dark:border-red-500 animate-fadeIn">
-                    <div className="p-4">
-                      <p className="text-sm text-gray-700 dark:text-gray-300 mb-3 font-medium">
-                        ¿Estás seguro de que quieres cerrar sesión?
-                      </p>
-                      <div className="flex justify-end gap-2">
-                        <button
-                          className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded transition-colors"
-                          onClick={() => setShowLogoutConfirm(false)}
-                        >
-                          Cancelar
-                        </button>
-                        <button
-                          className="px-3 py-1.5 text-sm bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white rounded transition-colors"
-                          onClick={handleLogout}
-                        >
-                          Sí, salir
-                        </button>
-                      </div>
-                    </div>
+                {/* Contenedor para nombre de usuario y botones */}
+                <div className="flex items-center gap-2">
+                  <div className="text-right">
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      Hola, {userName}
+                    </p>
                   </div>
-                )}
+
+                  {/* Botón cambiar contraseña */}
+                  <button
+                    className="p-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer"
+                    onClick={() => setShowPasswordModal(true)}
+                    aria-label="Cambiar contraseña"
+                    title="Cambiar contraseña"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+
+                  {/* Botón de cierre de sesión con icono */}
+                  <div className="relative">
+                    <button
+                      className={`
+                                  w-10 h-10 flex items-center justify-center rounded-full
+                                  transition-all duration-300 cursor-pointer
+                                  ${
+                                    showLogoutConfirm
+                                      ? "scale-110 bg-red-100 dark:bg-gray-800"
+                                      : "bg-white dark:bg-gray-800"
+                                  }
+                                  shadow-md hover:shadow-lg
+                                  text-gray-600 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400
+                                  border border-gray-200 dark:border-gray-700
+                                `}
+                      aria-label="Cerrar sesión"
+                      onClick={() => setShowLogoutConfirm(!showLogoutConfirm)}
+                    >
+                      <svg
+                        className={`w-5 h-5 transition-transform ${
+                          showLogoutConfirm ? "rotate-90 text-red-500" : ""
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                        />
+                      </svg>
+                    </button>
+
+                    {/* Confirmación de cierre de sesión */}
+                    {showLogoutConfirm && (
+                      <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl z-10 overflow-hidden border border-red-200 dark:border-red-500 animate-fadeIn">
+                        <div className="p-4">
+                          <p className="text-sm text-gray-700 dark:text-gray-300 mb-3 font-medium">
+                            ¿Estás seguro de que quieres cerrar sesión?
+                          </p>
+                          <div className="flex justify-end gap-2">
+                            <button
+                              className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded transition-colors"
+                              onClick={() => setShowLogoutConfirm(false)}
+                            >
+                              Cancelar
+                            </button>
+                            <button
+                              className="px-3 py-1.5 text-sm bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white rounded transition-colors"
+                              onClick={handleLogout}
+                            >
+                              Sí, salir
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
-
             <nav className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <Link
                 to="/appointments/my-appointments"
