@@ -8,6 +8,71 @@ const toISO = (value) => {
   return d.toISOString();
 };
 
+const WEEK_KEYS = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+];
+
+const padHHmm = (t) => {
+  if (!t) return "";
+  const [h = "", m = ""] = String(t).split(":");
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`; // 9:00 -> 09:00
+};
+
+const toYMD = (d) => {
+  if (!d) return "";
+  const date = d instanceof Date ? d : new Date(d);
+  if (Number.isNaN(date.getTime())) return "";
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${dd}`;
+};
+
+export const normalizeAppointmentSettingsForAPI = (raw) => {
+  const out = {
+    interval:
+      Number.isFinite(Number(raw?.interval)) && Number(raw.interval) >= 5
+        ? Math.min(240, Math.max(5, Math.floor(Number(raw.interval))))
+        : 30,
+    maxMonthsAhead:
+      Number.isFinite(Number(raw?.maxMonthsAhead)) &&
+      Number(raw.maxMonthsAhead) >= 1
+        ? Math.min(24, Math.max(1, Math.floor(Number(raw.maxMonthsAhead))))
+        : 2,
+    staffCount:
+      Number.isFinite(Number(raw?.staffCount)) && Number(raw.staffCount) >= 1
+        ? Math.min(50, Math.max(1, Math.floor(Number(raw.staffCount))))
+        : 1,
+    timezone:
+      typeof raw?.timezone === "string"
+        ? raw.timezone
+        : raw?.timezone?.value || "Europe/Madrid",
+    closedDates: Array.isArray(raw?.closedDates)
+      ? raw.closedDates.map(toYMD).filter(Boolean)
+      : [],
+    dayBlocks: {},
+  };
+
+  const db = raw?.dayBlocks || {};
+  WEEK_KEYS.forEach((k) => {
+    const arr = Array.isArray(db[k]) ? db[k] : [];
+    out.dayBlocks[k] = arr
+      .filter((b) => b && b.start && b.end)
+      .map((b) => ({
+        start: padHHmm(b.start),
+        end: padHHmm(b.end),
+      }));
+  });
+
+  return out;
+};
+
 // Obtener configuración
 export const getAppointmentSettings = async () => {
   const res = await api.get("/appointment-settings");
@@ -16,21 +81,21 @@ export const getAppointmentSettings = async () => {
 
 // Actualizar configuración
 export const saveAppointmentSettings = async (data) => {
-  // Enviamos SOLO campos del modo avanzado
-  const payload = {
-    // dayBlocks obligatorio
-    dayBlocks: data.dayBlocks,
-    // interval / maxMonthsAhead / staffCount obligatorios
-    interval: Number(data.interval),
-    maxMonthsAhead: Number(data.maxMonthsAhead),
-    staffCount: Number(data.staffCount),
-    // opcionales
-    timezone: data.timezone,
-    closedDates: Array.isArray(data.closedDates) ? data.closedDates : [],
-  };
+  const payload = normalizeAppointmentSettingsForAPI(data);
 
-  const res = await api.post("/appointment-settings", payload);
-  return res.data.data;
+  try {
+    const res = await api.post("/appointment-settings", payload);
+    return res.data.data;
+  } catch (e) {
+    // Mejora de mensaje para ver el motivo exacto del 400
+    const msg =
+      (e?.response?.data?.errors &&
+        e.response.data.errors.map((x) => x.msg).join(" · ")) ||
+      e?.response?.data?.error ||
+      e?.message ||
+      "Error al guardar configuración";
+    throw new Error(msg);
+  }
 };
 
 // Crear cita como ADMIN para cualquier usuario
