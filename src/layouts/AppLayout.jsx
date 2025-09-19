@@ -176,22 +176,22 @@ export default function AppLayout() {
                 </div>
               </div>
             </div>
-            <nav className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <nav className="flex flex-row gap-2 justify-center sm:justify-end">
               <Link
                 to="/appointments/my-appointments"
-                className="px-4 py-4 sm:py-2 bg-blue-700 hover:bg-blue-800 text-white uppercase text-sm text-center font-semibold rounded-lg transition"
+                className="px-3 py-2 bg-blue-700 hover:bg-blue-800 text-white uppercase text-xs sm:text-sm text-center font-semibold rounded-lg transition flex-1 sm:flex-none"
               >
                 Mis Citas
               </Link>
               <Link
                 to="/appointments/new"
-                className="px-4 py-4 sm:py-2 bg-blue-700 hover:bg-blue-800 text-white uppercase text-sm text-center font-semibold rounded-lg transition"
+                className="px-3 py-2 bg-blue-700 hover:bg-blue-800 text-white uppercase text-xs sm:text-sm text-center font-semibold rounded-lg transition flex-1 sm:flex-none"
               >
                 Nueva Cita
               </Link>
               <Link
                 to="/appointments/history"
-                className="px-4 py-4 sm:py-2 bg-blue-700 hover:bg-blue-800 text-white uppercase text-sm text-center font-semibold rounded-lg transition"
+                className="px-3 py-2 bg-blue-700 hover:bg-blue-800 text-white uppercase text-xs sm:text-sm text-center font-semibold rounded-lg transition flex-1 sm:flex-none"
               >
                 Histórico
               </Link>
