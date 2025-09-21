@@ -196,6 +196,18 @@ export default function UserDetails() {
                     </div>
                   </div>
                 )}
+
+                {/* Bloque de notas */}
+                {data.notes && (
+                  <div className="mt-8">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                      Notas
+                    </h3>
+                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-gray-700 whitespace-pre-line">
+                      {data.notes}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -97,6 +97,7 @@ export default function EditUserModal({ id, onClose }) {
                 name: data.name,
                 lastname: data.lastname,
                 phone: data.phone || "",
+                notes: data.notes || "",
                 email: data.email,
                 admin: data.admin,
                 verified: data.verified,

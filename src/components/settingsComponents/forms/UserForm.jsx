@@ -11,6 +11,7 @@ const createUserSchema = z.object({
   phone: z.string().optional(),
   email: z.string().email("Invalid email"),
   password: z.string().min(6, "Min 6 characters").optional(),
+  notes: z.string().optional(),
   admin: z.boolean().optional().default(false),
   verified: z.boolean().optional().default(false),
 });
@@ -178,6 +179,25 @@ export default function UserForm({
           )}
         </div>
       )}
+
+      {/* Notas */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          Notas
+        </label>
+        <textarea
+          rows={4}
+          {...register("notes")}
+          placeholder="Escribe notas o historial del usuario..."
+          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200"
+          disabled={isSubmitting}
+        />
+        {errors.notes && (
+          <p className="mt-1.5 text-red-600 text-sm">
+            {String(errors.notes.message)}
+          </p>
+        )}
+      </div>
 
       {/* Admin & Verified */}
       <div className="flex items-center gap-8 py-2">
