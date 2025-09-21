@@ -690,6 +690,8 @@ export default function SettingsAppointments() {
   const [editingAppt, setEditingAppt] = useState(null);
 
   const [q, setQ] = useState("");
+  // Estado para el orden
+  const [order, setOrder] = useState("asc");
 
   const queryClient = useQueryClient();
 
@@ -743,23 +745,40 @@ export default function SettingsAppointments() {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const nq = normalize(q);
+
   const filtered = useMemo(() => {
-    if (!nq) return appointments;
-    return appointments.filter((a) => {
-      const userStr = normalize(
-        `${a.user?.name ?? ""} ${a.user?.lastname ?? ""} ${
-          a.user?.phone ?? ""
-        } ${a.user?.email ?? ""}`
+    if (!nq) {
+      return [...appointments].sort(
+        (a, b) =>
+          order === "asc"
+            ? new Date(a.date) - new Date(b.date) // antiguas primero
+            : new Date(b.date) - new Date(a.date) // recientes primero
       );
-      const servicesStr = normalize(
-        (a.services || []).map((s) => s.name).join(" ")
+    }
+
+    return appointments
+      .filter((a) => {
+        const userStr = normalize(
+          `${a.user?.name ?? ""} ${a.user?.lastname ?? ""} ${
+            a.user?.phone ?? ""
+          } ${a.user?.email ?? ""}`
+        );
+        const servicesStr = normalize(
+          (a.services || []).map((s) => s.name).join(" ")
+        );
+        const dateStr = normalize(new Date(a.date).toLocaleString("es-ES"));
+        return (
+          userStr.includes(nq) ||
+          servicesStr.includes(nq) ||
+          dateStr.includes(nq)
+        );
+      })
+      .sort((a, b) =>
+        order === "asc"
+          ? new Date(a.date) - new Date(b.date)
+          : new Date(b.date) - new Date(a.date)
       );
-      const dateStr = normalize(new Date(a.date).toLocaleString("es-ES"));
-      return (
-        userStr.includes(nq) || servicesStr.includes(nq) || dateStr.includes(nq)
-      );
-    });
-  }, [appointments, nq]);
+  }, [appointments, nq, order]); // 👈 agrega order como dependencia
 
   if (isLoading) {
     return (
@@ -822,6 +841,28 @@ export default function SettingsAppointments() {
             (página {page})
           </div>
         )}
+      </div>
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={() => setOrder("asc")}
+          className={`px-3 py-1 rounded-lg text-sm ${
+            order === "asc"
+              ? "bg-indigo-600 text-white"
+              : "bg-gray-200 text-gray-700"
+          }`}
+        >
+          Más antiguas primero
+        </button>
+        <button
+          onClick={() => setOrder("desc")}
+          className={`px-3 py-1 rounded-lg text-sm ${
+            order === "desc"
+              ? "bg-indigo-600 text-white"
+              : "bg-gray-200 text-gray-700"
+          }`}
+        >
+          Más recientes primero
+        </button>
       </div>
 
       <div className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">

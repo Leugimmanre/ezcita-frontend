@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getServices } from "@/services/servicesAPI";
 import { toast } from "react-toastify";
 import { useAvailability } from "@/hooks/useAvailability";
+import { getAppointmentSettings } from "@/services/appointmentSettingsAPI";
 
 registerLocale("es", es);
 
@@ -40,29 +41,32 @@ export default function Appointment({
     return nextHour;
   });
   const { staffCount: ctxStaffCount } = useAppointmentContext();
-  const capacity = Number(staffCountProp ?? ctxStaffCount ?? 1);
-
   const { data: allServices = [] } = useQuery({
     queryKey: ["services"],
     queryFn: getServices,
   });
+  // Ajustes de citas (incluye staffCount) traídos del backend
+  const { data: apptSettings } = useQuery({
+    queryKey: ["appointment-settings"],
+    queryFn: getAppointmentSettings,
+    staleTime: 0, // <- no uses cache vieja
+    refetchOnMount: true, // <- fuerza refetch al montar
+    refetchOnWindowFocus: true, // <- y al volver el foco
+  });
+  const capacity = useMemo(() => {
+    const fromProp = Number(staffCountProp);
+    const fromApi = Number(apptSettings?.staffCount);
+    const fromCtx = Number(ctxStaffCount);
+    return (
+      (Number.isFinite(fromProp) && fromProp) ||
+      (Number.isFinite(fromApi) && fromApi) ||
+      (Number.isFinite(fromCtx) && fromCtx) ||
+      1
+    );
+  }, [staffCountProp, apptSettings?.staffCount, ctxStaffCount]);
 
   const canConfirm = Boolean(selectedTime) && selectedServices.length > 0;
   const noServices = selectedServices.length === 0;
-
-  useEffect(() => {
-    if (isEditing && appointmentToEdit) {
-      setSelectedServices(appointmentToEdit.services);
-      const appointmentDate = new Date(appointmentToEdit.date);
-      setSelectedDate(appointmentDate);
-      const timeString = appointmentDate.toLocaleTimeString("es-ES", {
-        hour: "2-digit",
-        minute: "2-digit",
-        timeZone: timezone,
-      });
-      setSelectedTime(timeString);
-    }
-  }, [isEditing, appointmentToEdit, setSelectedServices, timezone]);
 
   const totalPrice = selectedServices.reduce(
     (sum, s) => sum + Number(s.price ?? 0),
@@ -109,10 +113,44 @@ export default function Appointment({
   }, [advancedMode, selectedDate, dayBlocks, interval]);
 
   const excludeId = isEditing ? appointmentToEdit?._id : undefined;
-  const { data: busy = [], isLoading: loadingBusy } = useAvailability(
-    selectedDate,
-    excludeId
-  );
+  const {
+    data: busy = [],
+    isLoading: loadingBusy,
+    isFetching: fetchingBusy,
+    refetch: refetchBusy,
+  } = useAvailability(selectedDate, excludeId);
+
+  // 1) Prefill al editar
+  useEffect(() => {
+    if (isEditing && appointmentToEdit) {
+      setSelectedServices(appointmentToEdit.services);
+      const appointmentDate = new Date(appointmentToEdit.date);
+      setSelectedDate(appointmentDate);
+      const timeString = appointmentDate.toLocaleTimeString("es-ES", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: timezone,
+      });
+      setSelectedTime(timeString);
+    }
+  }, [isEditing, appointmentToEdit, setSelectedServices, timezone]);
+
+  // 2) Refetchear disponibilidad SOLO cuando cambia el día seleccionado
+  useEffect(() => {
+    if (selectedDate) refetchBusy();
+  }, [selectedDate, refetchBusy]);
+
+  // 3) Si el padre cambia la lista de citas, refresca una vez.
+  useEffect(() => {
+    if (selectedDate) refetchBusy();
+  }, [appointments?.length, selectedDate, refetchBusy]);
+
+  // 4) Polling en pantalla para multiusuario (cada 10s)
+  useEffect(() => {
+    if (!selectedDate) return;
+    const id = setInterval(() => refetchBusy(), 10000);
+    return () => clearInterval(id);
+  }, [selectedDate, refetchBusy]);
 
   const handleRemoveService = (serviceId) => {
     setSelectedServices((prev) => prev.filter((s) => s._id !== serviceId));
@@ -135,35 +173,71 @@ export default function Appointment({
 
   const handleClearSelection = () => setSelectedServices([]);
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!canConfirm) return;
+
+    // Fecha/hora seleccionadas -> intervalos [start, end)
     const [hour, minute] = selectedTime.split(":").map(Number);
     const finalDate = new Date(selectedDate);
     finalDate.setHours(hour, minute, 0, 0);
+
     const finalEnd = new Date(finalDate);
     finalEnd.setMinutes(finalEnd.getMinutes() + totalDuration);
 
-    const overlaps =
-      appointments?.filter((appt) => {
-        if (!["pending", "confirmed"].includes(appt.status)) return false;
-        if (appt._id === appointmentToEdit?._id) return false;
-        const apptStart = new Date(appt.date);
-        const apptEnd = new Date(apptStart);
-        apptEnd.setMinutes(apptEnd.getMinutes() + appt.duration);
-        return apptStart < finalEnd && apptEnd > finalDate;
-      }).length || 0;
+    try {
+      // 1) Disponibilidad fresca desde el servidor
+      const refetchResult = await refetchBusy();
+      const freshBusy = refetchResult?.data ?? busy ?? [];
 
-    if (overlaps >= capacity) {
+      // 2) Solapes según servidor
+      const overlapsBusy = freshBusy.filter((b) => {
+        const apptStart = new Date(b.start);
+        const apptEnd = new Date(apptStart);
+        apptEnd.setMinutes(apptEnd.getMinutes() + Number(b.duration || 0));
+        return apptStart < finalEnd && apptEnd > finalDate;
+      }).length;
+
+      // 3) (Defensivo) Solapes locales conocidos por props
+      const overlapsLocal =
+        (appointments || []).filter((appt) => {
+          if (!["pending", "confirmed"].includes(appt.status)) return false;
+          if (appt._id === appointmentToEdit?._id) return false; // si estás editando, excluye la propia
+          const apptStart = new Date(appt.date);
+          const apptEnd = new Date(apptStart);
+          apptEnd.setMinutes(apptEnd.getMinutes() + Number(appt.duration || 0));
+          return apptStart < finalEnd && apptEnd > finalDate;
+        }).length || 0;
+
+      // 4) Tomamos el peor caso
+      const overlaps = Math.max(overlapsBusy, overlapsLocal);
+
+      if (overlaps >= capacity) {
+        toast.error(
+          "No hay personal disponible para esa franja horaria. Elige otra hora."
+        );
+        // Refresca inmediatamente la UI para que el botón quede deshabilitado
+        await refetchBusy();
+        // (opcional) Limpia la hora seleccionada
+        // setSelectedTime(null);
+        return;
+      }
+
+      // OK -> confirmamos
+      onConfirm({
+        date: finalDate,
+        services: selectedServices.map((s) => s._id),
+        duration: totalDuration,
+      });
+
+      // Vuelve a refrescar la disponibilidad tras enviar
+      // para que el slot se apague al momento
+      refetchBusy();
+    } catch (err) {
+      console.error("Error comprobando disponibilidad:", err);
       toast.error(
-        "No hay personal disponible para esa franja horaria. Elige otra hora."
+        "No se pudo comprobar la disponibilidad. Inténtalo de nuevo."
       );
-      return;
     }
-    onConfirm({
-      date: finalDate,
-      services: selectedServices.map((s) => s._id),
-      duration: totalDuration,
-    });
   };
 
   const handleDateChange = (date) => {
@@ -412,92 +486,133 @@ export default function Appointment({
               />
 
               {selectedDate && (
-                <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-3 mt-6">
-                  {availableHours.map((hour) => {
-                    const [hourPart, minutePart] = hour.split(":").map(Number);
-                    const dateWithTime = new Date(selectedDate);
-                    dateWithTime.setHours(hourPart, minutePart, 0, 0);
+                <>
+                  {/* Badge de capacidad concurrente */}
+                  {/* <div className="mt-2 text-xs text-[var(--color-muted)] bg-[var(--color-secondary-light)] dark:bg-gray-700 dark:text-blue-200 inline-block px-2 py-1 rounded">
+                    Capacidad concurrente: {capacity}
+                  </div> */}
 
-                    const now = new Date();
+                  <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-3 mt-6">
+                    {availableHours.map((hour) => {
+                      const [hourPart, minutePart] = hour
+                        .split(":")
+                        .map(Number);
+                      const dateWithTime = new Date(selectedDate);
+                      dateWithTime.setHours(hourPart, minutePart, 0, 0);
 
-                    const selectedEnd = new Date(dateWithTime);
-                    selectedEnd.setMinutes(
-                      selectedEnd.getMinutes() + totalDuration
-                    );
+                      const now = new Date();
 
-                    const overlappingCount = busy.filter((b) => {
-                      const apptStart = new Date(b.start);
-                      const apptEnd = new Date(apptStart);
-                      apptEnd.setMinutes(
-                        apptEnd.getMinutes() + (b.duration || 0)
+                      const selectedEnd = new Date(dateWithTime);
+                      selectedEnd.setMinutes(
+                        selectedEnd.getMinutes() + totalDuration
                       );
-                      return apptStart < selectedEnd && apptEnd > dateWithTime;
-                    }).length;
 
-                    const isBooked = overlappingCount >= capacity;
+                      // Solapes con datos del servidor
+                      const overlapsBusyCount = (busy || []).filter((b) => {
+                        const apptStart = new Date(b.start);
+                        const apptEnd = new Date(apptStart);
+                        apptEnd.setMinutes(
+                          apptEnd.getMinutes() + Number(b.duration || 0)
+                        );
+                        return (
+                          apptStart < selectedEnd && apptEnd > dateWithTime
+                        );
+                      }).length;
 
-                    const hhmm = `${String(hourPart).padStart(2, "0")}:${String(
-                      minutePart
-                    ).padStart(2, "0")}`;
-                    const fitsBlock = fitsAnyDayBlock(
-                      selectedDate,
-                      hhmm,
-                      totalDuration || interval,
-                      { dayBlocks }
-                    );
+                      // Solapes locales que te llegan por props (por si busy aún no trae lo último)
+                      const overlapsLocalCount =
+                        (appointments || []).filter((appt) => {
+                          if (!["pending", "confirmed"].includes(appt.status))
+                            return false;
+                          if (appt._id === appointmentToEdit?._id) return false;
+                          const apptStart = new Date(appt.date);
+                          const apptEnd = new Date(apptStart);
+                          apptEnd.setMinutes(
+                            apptEnd.getMinutes() + Number(appt.duration || 0)
+                          );
+                          return (
+                            apptStart < selectedEnd && apptEnd > dateWithTime
+                          );
+                        }).length || 0;
 
-                    // Calcula disabled real y la razón para el tooltip
-                    const disabled =
-                      noServices ||
-                      dateWithTime < now ||
-                      isBooked ||
-                      !fitsBlock;
+                      const overlappingCount = Math.max(
+                        overlapsBusyCount,
+                        overlapsLocalCount
+                      );
+                      const isBooked = overlappingCount >= capacity;
 
-                    const reason =
-                      noServices
-                        ? "Selecciona al menos un servicio"
-                        : dateWithTime < now
-                        ? "Hora en el pasado"
-                        : isBooked
-                        ? "Franja ocupada"
-                        : !fitsBlock
-                        ? "No cabe en los bloques del día"
-                        : "";
+                      const hhmm = `${String(hourPart).padStart(
+                        2,
+                        "0"
+                      )}:${String(minutePart).padStart(2, "0")}`;
 
-                    const slotBase =
-                      "text-center text-sm font-bold p-2 rounded-lg transition";
-                    const slotSelected =
-                      "bg-[var(--color-primary)] text-white ring-2 ring-[color-mix(in_oklab,var(--color-primary)_55%,white_45%)] " +
-                      "dark:bg-blue-500 dark:text-white dark:ring-2 dark:ring-blue-300";
-                    const slotIdle =
-                      "bg-[var(--color-secondary)] text-[var(--color-primary)] hover:bg-[color-mix(in_oklab,var(--color-primary)_8%,var(--color-secondary)_92%)] " +
-                      "dark:bg-gray-800 dark:text-blue-300 dark:hover:bg-gray-700";
-                    const slotDisabled = "opacity-30 cursor-not-allowed";
+                      const fitsBlock = fitsAnyDayBlock(
+                        selectedDate,
+                        hhmm,
+                        totalDuration || interval,
+                        { dayBlocks }
+                      );
 
-                    const classes =
-                      slotBase +
-                      " " +
-                      (selectedTime === hour ? slotSelected : slotIdle) +
-                      (disabled ? " " + slotDisabled : "");
+                      // Deshabilitado si:
+                      // - está cargando/actualizando disponibilidad
+                      // - no hay servicios
+                      // - la hora ya pasó
+                      // - la franja está ocupada (capacidad alcanzada)
+                      // - no cabe en los bloques del día
+                      const disabled =
+                        loadingBusy ||
+                        fetchingBusy ||
+                        noServices ||
+                        dateWithTime < now ||
+                        isBooked ||
+                        !fitsBlock;
 
-                    return (
-                      <button
-                        key={hour}
-                        // Deshabilitar de verdad el botón
-                        disabled={disabled}
-                        onClick={() => {
-                          if (disabled) return;
-                          setSelectedTime(hour);
-                        }}
-                        className={classes}
-                        aria-disabled={disabled}
-                        title={disabled ? reason : undefined}
-                      >
-                        {hour}
-                      </button>
-                    );
-                  })}
-                </div>
+                      const reason =
+                        loadingBusy || fetchingBusy
+                          ? "Actualizando disponibilidad…"
+                          : noServices
+                          ? "Selecciona al menos un servicio"
+                          : dateWithTime < now
+                          ? "Hora en el pasado"
+                          : isBooked
+                          ? "Franja ocupada"
+                          : !fitsBlock
+                          ? "No cabe en los bloques del día"
+                          : "";
+
+                      const slotBase =
+                        "text-center text-sm font-bold p-2 rounded-lg transition";
+                      const slotSelected =
+                        "bg-[var(--color-primary)] text-white ring-2 ring-[color-mix(in_oklab,var(--color-primary)_55%,white_45%)] dark:bg-blue-500 dark:text-white dark:ring-2 dark:ring-blue-300";
+                      const slotIdle =
+                        "bg-[var(--color-secondary)] text-[var(--color-primary)] hover:bg-[color-mix(in_oklab,var(--color-primary)_8%,var(--color-secondary)_92%)] dark:bg-gray-800 dark:text-blue-300 dark:hover:bg-gray-700";
+                      const slotDisabled = "opacity-30 cursor-not-allowed";
+
+                      const classes =
+                        `${slotBase} ${
+                          selectedTime === hour ? slotSelected : slotIdle
+                        }` + (disabled ? ` ${slotDisabled}` : "");
+
+                      return (
+                        <button
+                          key={hour}
+                          disabled={disabled}
+                          onClick={async () => {
+                            if (disabled) return;
+                            // Refresca al pulsar el slot para “apagarlo” si quedó justo al límite
+                            await refetchBusy();
+                            setSelectedTime(hour);
+                          }}
+                          className={classes}
+                          aria-disabled={disabled}
+                          title={disabled ? reason : undefined}
+                        >
+                          {hour}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
               )}
 
               {loadingBusy && (
