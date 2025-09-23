@@ -216,7 +216,6 @@ export default function ServicesList() {
           onChange={(e) => setSortBy(e.target.value)}
           className="rounded-lg border border-gray-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
-          <option value="">Ordenar</option>
           <option value="name">Ordenar por Nombre</option>
           <option value="price">Ordenar por Precio</option>
           <option value="duration">Ordenar por Duración</option>
