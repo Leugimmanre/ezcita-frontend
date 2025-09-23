@@ -1,5 +1,5 @@
 // src/components/servicesComponents/ServicesList.jsx
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getServices } from "@/services/servicesAPI";
 import ServiceItem from "./ServiceItem";
@@ -20,12 +20,15 @@ export default function ServicesList() {
   const maxServices = MAX_SERVICES_SELECTION;
   const errorTimeoutRef = useRef(null);
 
-  // Limpieza de timeout al desmontar
+  // Estado de filtros/orden
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("all");
+  const [sortBy, setSortBy] = useState("name"); // name | price | duration
+
+  // español: limpieza de timeout al desmontar
   useEffect(() => {
     return () => {
-      if (errorTimeoutRef.current) {
-        clearTimeout(errorTimeoutRef.current);
-      }
+      if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
     };
   }, []);
 
@@ -36,7 +39,33 @@ export default function ServicesList() {
     staleTime: 1000 * 60 * 5, // 5 minutos
   });
 
-  const services = data || [];
+  const services = useMemo(() => data ?? [], [data]);
+
+  // Helpers
+  // español: normaliza texto para búsqueda, elimina acentos y pasa a minúsculas
+  const normalize = (s) =>
+    (s ?? "")
+      .toString()
+      .normalize("NFD")
+      .replace(/\p{Diacritic}/gu, "")
+      .toLowerCase();
+
+  // español: obtiene duración del servicio en minutos para ordenar/mostrar
+  const serviceDurationMinutes = (service) => {
+    const unit = (service?.durationUnit ?? "").toLowerCase();
+    const dur = Number(service?.duration ?? 0);
+    return unit === "horas" ? dur * 60 : dur;
+  };
+
+  // español: categorías únicas a partir de los servicios
+  const categories = useMemo(() => {
+    const set = new Set(
+      services
+        .map((s) => s?.category || "Sin categoría")
+        .filter((c) => typeof c === "string" && c.trim() !== "")
+    );
+    return ["all", ...Array.from(set)];
+  }, [services]);
 
   // Validación de selección máxima
   useEffect(() => {
@@ -55,13 +84,13 @@ export default function ServicesList() {
       setSelectionError("");
     }
 
-    // Deseleccionar si ya está seleccionado
+    // español: deseleccionar si ya está
     if (selectedServices.some((s) => s._id === service._id)) {
       setSelectedServices((prev) => prev.filter((s) => s._id !== service._id));
       return;
     }
 
-    // Validar límite máximo
+    // español: validar límite
     if (selectedServices.length >= maxServices) {
       setSelectionError(
         `Límite alcanzado: Máximo ${maxServices} servicios por cita`
@@ -70,7 +99,7 @@ export default function ServicesList() {
       return;
     }
 
-    // Agregar nuevo servicio
+    // español: agregar
     setSelectedServices((prev) => [...prev, service]);
   };
 
@@ -91,14 +120,44 @@ export default function ServicesList() {
       (unit ?? "").toLowerCase() === "horas"
         ? Number(duration) * 60
         : Number(duration);
-
     const h = Math.floor(totalMinutes / 60);
     const m = totalMinutes % 60;
-
     if (h === 0) return `${m} min`;
     if (m === 0) return `${h}h`;
     return `${h}h ${m}min`;
   };
+
+  // Aplicar búsqueda + filtro + ordenación
+  const filteredServices = useMemo(() => {
+    const nSearch = normalize(search);
+
+    let list = services.filter((s) => {
+      // español: filtro por categoría (si no es "all")
+      const cat = s?.category || "Sin categoría";
+      const catOk = category === "all" ? true : cat === category;
+
+      // español: búsqueda por nombre y descripción (si existen)
+      const inName = normalize(s?.name).includes(nSearch);
+      const inDesc = normalize(s?.description).includes(nSearch);
+
+      const searchOk = nSearch.length === 0 ? true : inName || inDesc;
+      return catOk && searchOk;
+    });
+
+    // español: ordenación
+    list.sort((a, b) => {
+      if (sortBy === "name") {
+        return normalize(a?.name).localeCompare(normalize(b?.name));
+      }
+      if (sortBy === "price") {
+        return Number(a?.price ?? 0) - Number(b?.price ?? 0);
+      }
+      // duration
+      return serviceDurationMinutes(a) - serviceDurationMinutes(b);
+    });
+
+    return list;
+  }, [services, search, category, sortBy]);
 
   return (
     <div className="max-w-6xl mx-auto px-4">
@@ -109,6 +168,59 @@ export default function ServicesList() {
         <p className="text-lg text-gray-600">
           Puedes seleccionar hasta {maxServices} servicios por cita
         </p>
+      </div>
+
+      {/* Barra de controles: búsqueda, categoría, orden */}
+      <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+        {/* Búsqueda */}
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Buscar servicios…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 pr-10 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 opacity-60"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M12.9 14.32a8 8 0 111.414-1.414l3.387 3.387a1 1 0 01-1.414 1.414l-3.387-3.387zM14 8a6 6 0 11-12 0 6 6 0 0112 0z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </span>
+        </div>
+
+        {/* Categoría */}
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="rounded-lg border border-gray-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          {categories.map((c) => (
+            <option key={c} value={c}>
+              {c === "all" ? "Todas las categorías" : c}
+            </option>
+          ))}
+        </select>
+
+        {/* Ordenar por */}
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="rounded-lg border border-gray-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          <option value="">Ordenar</option>
+          <option value="name">Ordenar por Nombre</option>
+          <option value="price">Ordenar por Precio</option>
+          <option value="duration">Ordenar por Duración</option>
+        </select>
       </div>
 
       {/* Contador de servicios seleccionados */}
@@ -153,7 +265,7 @@ export default function ServicesList() {
         )}
       </div>
 
-      {/* Mensaje de error */}
+      {/* Mensaje de error selección */}
       {selectionError && (
         <div className="mb-6 animate-fadeIn">
           <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg flex items-start shadow-sm">
@@ -274,10 +386,10 @@ export default function ServicesList() {
         </div>
       )}
 
-      {/* Lista de servicios */}
-      {services.length > 0 && (
+      {/* Lista filtrada */}
+      {filteredServices.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {services.map((service) => (
+          {filteredServices.map((service) => (
             <ServiceItem
               key={service._id}
               service={service}
@@ -296,6 +408,30 @@ export default function ServicesList() {
           ))}
         </div>
       )}
+
+      {/* Sin resultados para filtros/búsqueda */}
+      {!isLoading &&
+        !isError &&
+        services.length > 0 &&
+        filteredServices.length === 0 && (
+          <div className="bg-white border border-gray-200 rounded-xl p-8 text-center shadow-sm mb-8">
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              Sin resultados
+            </h3>
+            <p className="text-gray-600 mb-4">
+              No encontramos servicios que coincidan con tu búsqueda o filtros.
+            </p>
+            <div className="flex flex-wrap gap-2 justify-center">
+              <Button onClick={() => setSearch("")}>Limpiar búsqueda</Button>
+              <Button onClick={() => setCategory("all")}>
+                Todas las categorías
+              </Button>
+              <Button onClick={() => setSortBy("name")}>
+                Orden por nombre
+              </Button>
+            </div>
+          </div>
+        )}
 
       {/* Resumen de selección */}
       {selectedServices.length > 0 && (

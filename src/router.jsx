@@ -1,5 +1,5 @@
 // src/router.jsx
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import AuthLayout from "@/layouts/AuthLayout.jsx";
 import AppLayout from "@/layouts/AppLayout.jsx";
 import LoginView from "@/views/authViews/LoginView.jsx";
@@ -68,20 +68,25 @@ export const router = createBrowserRouter([
     ),
     children: [
       {
-        path: "new",
         element: <NewAppointmentLayout />,
         children: [
-          { index: true, element: <ServicesView /> },
-          { path: "details", element: <AppointmentView /> },
+          {
+            path: "new",
+            element: <Outlet />,
+            children: [
+              { index: true, element: <ServicesView /> },
+              { path: "details", element: <AppointmentView /> },
+            ],
+          },
+          { path: "edit/:id", element: <EditAppointmentView /> },
+          {
+            path: "my-appointments",
+            element: <AppointmentsLayout />,
+            children: [{ index: true, element: <MyAppointmentsView /> }],
+          },
+          { path: "history", element: <MyAppointmentsHistoryView /> },
         ],
       },
-      { path: "edit/:id", element: <EditAppointmentView /> },
-      {
-        path: "my-appointments",
-        element: <AppointmentsLayout />,
-        children: [{ index: true, element: <MyAppointmentsView /> }],
-      },
-      { path: "history", element: <MyAppointmentsHistoryView /> },
     ],
   },
 
