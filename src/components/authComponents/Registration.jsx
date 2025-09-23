@@ -28,6 +28,7 @@ export default function Registration() {
         ...(data.phone ? { phone: data.phone.trim() } : {}),
         email: data.email.toLowerCase().trim(),
         password: data.password,
+        phone: data.phone,
       };
 
       const response = await authAPI.register(payload);
