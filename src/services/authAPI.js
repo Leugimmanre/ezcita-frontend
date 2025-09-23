@@ -10,18 +10,19 @@ function currentTenant() {
 
 export const authAPI = {
   // Registro (PÚBLICO). Si tu backend requiere tenant en query, añádelo:
-  async register({ name, lastname, email, password }) {
+  async register({ name, lastname, email, password, phone }) {
     const tenant = currentTenant();
     const { data } = await api.post(
       "/auth/register",
       {
         name,
-        lastname, // ← requerido por tu modelo
+        lastname,
         email: email.toLowerCase().trim(),
         password,
+        phone,
       },
       {
-        // 👇 público: sin Authorization/x-tenant-id
+        // Público: sin Authorization/x-tenant-id
         meta: { public: true },
         params: { tenant },
       }
@@ -61,7 +62,7 @@ export const authAPI = {
         password,
       },
       {
-        // 👇 público: sin Authorization/x-tenant-id
+        // Público: sin Authorization/x-tenant-id
         meta: { public: true },
         params: { tenant }, // el backend lo lee como ?tenant=...
       }
