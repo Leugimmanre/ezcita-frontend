@@ -338,7 +338,7 @@ export default function AdminStatsDashboard() {
           color="#10B981"
         />
         <KpiCard
-          title="Clientes únicos"
+          title="Clientes"
           value={kpis.uniqueClients}
           icon={
             <svg

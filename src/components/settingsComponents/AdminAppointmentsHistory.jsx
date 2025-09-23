@@ -247,7 +247,7 @@ export default function AdminAppointmentsHistory() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                  Clientes únicos
+                  Clientes
                 </p>
                 <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">
                   {uniqueClients}
